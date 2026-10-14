@@ -64,3 +64,5 @@ Part B breakdown: spec 15, correct tokenization 15, maximal munch + keyword prio
 | 2026-10-14 | Path A: C + Flex | The lectures and examples are Flex-first, C is a prerequisite, and it leads naturally into Bison for M2 |
 | 2026-10-14 | Compiler code in root `src/` and `tests/`, not per project | P2–P4 extend the same lexer. Each submission zip is assembled by `make package-pN` |
 | 2026-10-14 | The repo is the agent memory (`PLAN.md`, `SESSION_LOG.md`, `AI_USAGE.md`) | Solo, multi-session, and cloud agents only see committed files |
+| 2026-10-14 | `CLAUDE.md` is a short orientation map; all rules live in `.claude/rules/` | One place per concern; `CLAUDE.md` stays short and doesn't drift from the rules |
+| 2026-10-14 | The agent never runs git write commands; it shows them and the student runs them | The student keeps full control of history (also enforced in `.claude/settings.json`) |

@@ -1,43 +1,60 @@
 # CLAUDE.md
 
-Solo student repo for **BIL/COME 463 Compiler Design (Fall 2026, Prof. Ammar Daşkın)**. Over the semester we build **one compiler** for a language we design ourselves, one milestone at a time (lexer → parser/AST → semantic analysis → IR/codegen).
+Solo student repository for **BIL/COME 463 Compiler Design** (Fall 2026, Prof. Ammar Daşkın). Over the semester we build **one compiler** for a language we design ourselves, adding one phase per project: lexer → parser + AST → semantic analysis → IR + code generation. The student must be able to explain every line, so clarity beats cleverness.
 
-## Every session
+## Start here
 
-1. **Start:** read `docs/PLAN.md` (current milestone, deadline, checklist) and the **latest entry** in `docs/SESSION_LOG.md`. Don't redo work that is already checked off.
-2. **End:** run `/wrap-up` (or follow `.claude/skills/wrap-up/SKILL.md`) so the next session, local or cloud, picks up exactly where we stopped. The repo is the memory, and anything not written to these files is lost.
+| Need | Read |
+|---|---|
+| What we are doing **right now** (milestone, deadline, checklist) | `docs/PLAN.md` |
+| Where the last session stopped | the top entry of `docs/SESSION_LOG.md` |
+| The assignment itself | `projects/project-N/directives/` |
+| The big picture across the semester | `docs/ROADMAP.md` |
 
-## Course rules that bind the agent
+End every working session with **`/wrap-up`**. The repo is the only memory shared between sessions and cloud agents.
 
-- **AI use is allowed, but the student must be able to explain every line live in class.** Keep code simple, explain each change in plain words, and prefer the lecture's idioms over clever ones.
-- **Log AI usage** in `docs/AI_USAGE.md`: notable prompts verbatim, and anything the AI got wrong and how it was fixed. Every project report requires this.
-- **Handwritten theory parts** (e.g. P1 Part A) are individual work. Act as a tutor: explain the method, give similar practice examples, and check the student's attempts. Don't hand over final answers to copy.
-- Never edit `projects/*/directives/` (the professor's text, kept verbatim) or `docs/lectures-notes/`.
-- Keep the repo private. Course policy forbids posting solutions.
-
-## Stack
-
-- **C (C11) + Flex 2.6** for the lexer. Bison 3.x from Homebrew for M2 (`brew install bison`; macOS ships 2.3, which is too old).
-- Build with `make`. The code must also build with `gcc` on Linux, the grading environment.
-- Python (`.venv/`) only for side tools such as the tiktoken BPE comparison.
-- Professor's reference code and newer lectures: https://github.com/adaskin/compiler-course (`lecture-notes/3-lexer-minilang-example/flex/`, `5-bison-example/`, …).
-
-## Layout
+## Repository map
 
 ```
-docs/LANGUAGE.md          living language spec, the source of truth for tokens and grammar
-docs/PLAN.md              current milestone: deadline, checklist, decisions
-docs/ROADMAP.md           semester overview
-docs/SESSION_LOG.md       one entry per session (newest on top)
-docs/AI_USAGE.md          AI usage log, feeds the reports
-src/                      the compiler; grows each milestone (lexer.l, tokens.h, main.c, …)
-tests/lexer/              test inputs; expected outputs in tests/lexer/expected/
-projects/project-N/directives/   professor's assignment text (read-only)
-projects/project-N/solution/     README, SPEC, REPORT sources and BPE scripts for that submission
+CLAUDE.md                    this file: orientation only
+README.md                    human-facing intro (author, course)
+.claude/
+  rules/                     binding rules, loaded automatically (see index below)
+  skills/wrap-up/            /wrap-up: end-of-session handoff
+  settings.json              permissions (git write commands are denied)
+docs/
+  PLAN.md                    current milestone plan + decisions log   ← living
+  SESSION_LOG.md             one entry per session, newest first      ← living
+  AI_USAGE.md                AI prompts and mistakes, feeds reports   ← living
+  LANGUAGE.md                our language spec, source of truth (to be written)
+  ROADMAP.md                 semester overview and milestones
+  lectures-notes/            course material (read-only)
+projects/
+  project-N/directives/      professor's assignment text, verbatim (read-only)
+  project-N/solution/        per-submission docs: README, SPEC, REPORT, BPE scripts
+src/                         the compiler; one codebase that grows each project
+tests/                       test inputs + expected outputs (tests/<phase>/expected/)
+Makefile                     build, test, package (to be written)
 ```
 
-## Conventions
+The code lives in `src/` and `tests/`, not inside `projects/`, because every project extends the previous one. A submission zip is assembled from them (`make package-pN`).
 
-- Spec first: change `docs/LANGUAGE.md` before changing token rules in `src/`.
-- Every lexer behaviour gets a test with an expected-output file. `make test` must pass before work is called done.
-- Commit in small steps with clear messages. Tag each submission (`git tag p1-submission`).
+## Rules index (`.claude/rules/`)
+
+| File | Covers |
+|---|---|
+| `workflow.md` | How to reply after a change (2–3 paragraph explanation) and git handling (show commands, never run them) |
+| `course-policy.md` | Academic integrity, AI-usage logging, tutoring for handwritten parts, read-only folders |
+| `docs-and-memory.md` | Which doc to update when, and the source-of-truth order |
+| `c-flex.md` | C / Flex / Bison coding and testing standards (applies to `src/`, `tests/`, `Makefile`) |
+
+## Stack and commands
+
+- **C11 + Flex 2.6** (lexer), **Bison 3.x** from Homebrew for the parser (macOS ships 2.3, which is too old). Must also build with `gcc` on Linux.
+- Python in `.venv/` only for side tools (tiktoken BPE comparison).
+- Planned commands: `make` (build) · `make test` (golden-file tests) · `make package-p1` (submission zip).
+
+## References
+
+- Professor's repo, with newer lectures and example code: https://github.com/adaskin/compiler-course (for example `lecture-notes/3-lexer-minilang-example/flex/` and `lecture-notes/5-bison-example/`)
+- Flex manual: https://westes.github.io/flex/manual/ · Thain, *Introduction to Compilers and Language Design* (free online)
