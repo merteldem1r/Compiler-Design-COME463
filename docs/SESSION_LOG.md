@@ -4,6 +4,26 @@ Newest entry on top. One entry per working session, written by `/wrap-up`.
 
 ---
 
+## 2026-10-14 — Status check, session recovery, wrap-up hook
+
+**Done**
+- Status analysis: P1 Part B is at "spec written, waiting for student review". No `src/`, `tests/`, `Makefile` or `.venv` yet; Part A not started. Flex 2.6.4 + gcc are installed. Homebrew Bison is **not** installed (only `/usr/bin/bison` 2.3), which matters for P2.
+- Recovered the previous session (ended with `/exit`, no log) from its transcript: new `SESSION_LOG.md` entry, two `AI_USAGE.md` rows, verbatim prompts P-2–P-4.
+- `docs/ROADMAP.md`: MiniLang → Anka.
+- Added `.claude/hooks/check-wrap-up.sh` + a `SessionStart` (startup) hook in `.claude/settings.json`. It flags commits newer than the last `SESSION_LOG.md` commit, and uncommitted leftovers. Tested: it listed the 3 unlogged commits.
+- `CLAUDE.md`: hook in the repo map; closing order `/wrap-up` → git block → `/exit`.
+
+**Bugs hit**
+- Process bug: the previous session's log was lost because `/exit` doesn't run `/wrap-up`. Skills only run when invoked, and the only hooks were Superset notifications. Fix: closing routine + detection hook.
+- Spec issues found in review (not fixed yet, waiting for the student): the float regex accepts `007.5` while `007` is an error; `\\.` accepts any escape, so `\q` must be rejected in the C action.
+
+**Next**
+1. Student review of `docs/LANGUAGE.md`: decide on leading zeros in floats, confirm the smaller AI-made choices (`print` keyword, `007` error, no negative literals, `1.`/`.5` invalid, ASCII only).
+2. Write `src/tokens.h`, `src/lexer.l`, `src/main.c`, `Makefile` (Thursday's plan).
+3. Part A, A1 regexes on paper.
+
+---
+
 ## 2026-10-14 — Repo rules + Anka language design *(recovered)*
 
 > The session ended with `/exit`, not `/wrap-up`, so this entry was rebuilt afterwards from the session transcript and the commits `fd35f9a`, `f668548`, `8281c2b`.

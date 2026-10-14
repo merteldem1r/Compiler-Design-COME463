@@ -37,6 +37,8 @@ Part B breakdown: spec 15, correct tokenization 15, maximal munch + keyword prio
 - [x] `docs/LANGUAGE.md`: token table (category → regex → example) covering **≥6 keywords, identifiers, int + float literals, ≥8 operators incl. multi-char (`==`, `<=`, `&&`), punctuation, `//` and `/* */` comments, a control structure, a loop**, plus 3 example programs (5–10 lines) and 2 design decisions with reasons
 - [x] Design with M2–M4 in mind: `return`, functions, `{ }`, `;`, types, `true/false`, string literals
 - [ ] Student review of `docs/LANGUAGE.md` (anything to change before we code?)
+  - [ ] Decide: forbid leading zeros in floats too (`007.5` is accepted today, while `007` is an error)?
+  - [ ] Confirm the AI-made choices: `print` keyword, `007` error, no negative literals, `1.`/`.5` invalid, ASCII only
 - [ ] `src/lexer.l`, `src/tokens.h`, `src/main.c`, `Makefile` (`make`, `make test`, `make package-p1`)
 - [ ] Lexer handles: maximal munch, keyword priority, line numbers, errors (report line, skip, continue), multi-char operators, both comment kinds, unterminated `/*` at EOF
 - [ ] Tests: `tests/lexer/` ≥3 files and ≥15 distinct cases (valid programs, edge cases, error cases) with `tests/lexer/expected/`
@@ -57,6 +59,7 @@ Part B breakdown: spec 15, correct tokenization 15, maximal munch + keyword prio
 ## Open questions
 - [ ] The assignment says groups of 2–3 (the FAQ says 2 is fine). **Confirm solo is OK** with the professor on Classroom.
 - [ ] Bonus: decide on Sat 17 based on time left.
+- [ ] Before P2: `brew install bison` (macOS `/usr/bin/bison` is 2.3, too old).
 
 ## Decisions log
 
