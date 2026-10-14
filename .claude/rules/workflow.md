@@ -18,10 +18,9 @@ No jargon without a one-line definition. The student must be able to defend ever
 
 ```bash
 git add <the specific files that changed>
-git commit -m "<type>: <short summary>" -m "<optional details>" -m "Co-Authored-By: Claude <noreply@anthropic.com>"
+git commit -m "<type>: <short summary>" 
 ```
 
 - List files explicitly; avoid `git add -A` unless every change belongs in the commit.
 - Message style: `docs:`, `feat:`, `fix:`, `test:`, `chore:` prefix, under 72 characters, imperative mood ("add lexer rules", not "added").
-- Keep the `Co-Authored-By` trailer. The course requires acknowledging AI help, and the trailer leaves a record in history.
 - If nothing changed, say so and show no git block.
