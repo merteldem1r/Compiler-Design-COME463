@@ -5,7 +5,7 @@
 **Directive:** `projects/project-1/directives/p1.md` (copied verbatim from the professor's GitHub)
 **Due: Monday, October 20, 2026, before class.** No late submissions.
 **Submit on Google Classroom:** the Part A PDF and the Part B zip (which contains REPORT.pdf).
-**Stack:** C + Flex (Path A). Solo.
+**Stack:** C + Flex (Path A). Solo. **Language:** Anka (`.anka`), spec in `docs/LANGUAGE.md`.
 
 ## What is being graded
 
@@ -21,7 +21,7 @@ Part B breakdown: spec 15, correct tokenization 15, maximal munch + keyword prio
 
 | Day | Part B (together) | Part A (you, ~1 h/day) |
 |---|---|---|
-| Wed 14 | Repo setup ✅ · **pick language name/purpose, draft token table** | A1 regexes |
+| Wed 14 | Repo setup ✅ · language designed ✅ (`docs/LANGUAGE.md` v0.1) | A1 regexes |
 | Thu 15 | Finish `docs/LANGUAGE.md` · write `src/lexer.l` + driver · Makefile | A2 automata |
 | Fri 16 | Tests (≥3 files, ≥15 cases) + expected outputs · fix bugs (**log them for the report**) | A3 Thompson |
 | Sat 17 | BPE comparison with tiktoken · draft REPORT.md + SPEC | A4 subset + minimization |
@@ -33,9 +33,10 @@ Part B breakdown: spec 15, correct tokenization 15, maximal munch + keyword prio
 ### Part B: language and lexer
 - [x] Official directive saved to `projects/project-1/directives/p1.md`
 - [x] Repo structure, `CLAUDE.md`, session/AI logs, `/wrap-up` skill, git init
-- [ ] Language name + one-sentence purpose
-- [ ] `docs/LANGUAGE.md`: token table (category → regex → example) covering **≥6 keywords, identifiers, int + float literals, ≥8 operators incl. multi-char (`==`, `<=`, `&&`), punctuation, `//` and `/* */` comments, a control structure, a loop**, plus 3 example programs (5–10 lines) and 2 design decisions with reasons
-- [ ] Design with M2–M4 in mind: `return`, functions, `{ }`, `;`, types, `true/false`, string literals
+- [x] Language name + one-sentence purpose: **Anka**, a small statically typed C-like language
+- [x] `docs/LANGUAGE.md`: token table (category → regex → example) covering **≥6 keywords, identifiers, int + float literals, ≥8 operators incl. multi-char (`==`, `<=`, `&&`), punctuation, `//` and `/* */` comments, a control structure, a loop**, plus 3 example programs (5–10 lines) and 2 design decisions with reasons
+- [x] Design with M2–M4 in mind: `return`, functions, `{ }`, `;`, types, `true/false`, string literals
+- [ ] Student review of `docs/LANGUAGE.md` (anything to change before we code?)
 - [ ] `src/lexer.l`, `src/tokens.h`, `src/main.c`, `Makefile` (`make`, `make test`, `make package-p1`)
 - [ ] Lexer handles: maximal munch, keyword priority, line numbers, errors (report line, skip, continue), multi-char operators, both comment kinds, unterminated `/*` at EOF
 - [ ] Tests: `tests/lexer/` ≥3 files and ≥15 distinct cases (valid programs, edge cases, error cases) with `tests/lexer/expected/`
@@ -66,3 +67,5 @@ Part B breakdown: spec 15, correct tokenization 15, maximal munch + keyword prio
 | 2026-10-14 | The repo is the agent memory (`PLAN.md`, `SESSION_LOG.md`, `AI_USAGE.md`) | Solo, multi-session, and cloud agents only see committed files |
 | 2026-10-14 | `CLAUDE.md` is a short orientation map; all rules live in `.claude/rules/` | One place per concern; `CLAUDE.md` stays short and doesn't drift from the rules |
 | 2026-10-14 | The agent never runs git write commands; it shows them and the student runs them | The student keeps full control of history (also enforced in `.claude/settings.json`) |
+| 2026-10-14 | Language **Anka** (`.anka`): C-like, `x: int` annotations, braces + `;`, `->` `..` `**`, compound assignment, `%`, `break`/`continue`, `for i in a..b` | Chosen together via Q&A. Each feature is cheap in P2–P4; see `docs/LANGUAGE.md` §6 |
+| 2026-10-14 | Strings only as `print` arguments; comments nest | Full lexer edge cases without string memory management in P4; nesting is a strong "beyond regular" report point |
