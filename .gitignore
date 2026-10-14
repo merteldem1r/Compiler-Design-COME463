@@ -1,0 +1,18 @@
+# build output
+build/
+*.o
+lex.yy.c
+*.tab.c
+*.tab.h
+*.output
+
+# submission bundles (rebuilt by make package-pN)
+dist/
+
+# python side tools
+.venv/
+__pycache__/
+
+# local / OS
+.DS_Store
+.claude/settings.local.json

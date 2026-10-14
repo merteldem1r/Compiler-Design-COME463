@@ -20,13 +20,13 @@ Required features across the whole language (lecture 1): variables, functions, a
 | Midterm | 20% | Same style as the written assignments |
 | Written assignments | 10% | 2–3 sets: automata, grammars, parsing tables, type systems |
 
-AI tools are allowed, but every report has to acknowledge them and **we must be able to explain every line**. That is why `docs/AI_USAGE.md` (planned) records what the agent did.
+AI tools are allowed, but every report has to acknowledge them and **we must be able to explain every line**. That is why `docs/AI_USAGE.md` records what the agent did.
 
 ## Milestones
 
 | # | Milestone | Lecture weeks | Lecture notes to study | Status |
 |---|---|---|---|---|
-| M1 | **Lexer**: token spec, regexes, Flex/PLY scanner, error handling | 2–3 | `2-lexical-analysis.pdf`, `3-lexical-analysis-II.pdf` | 🔜 in progress, see [PLAN.md](PLAN.md) |
+| M1 | **Lexer** (due **Mon 2026-10-20**): own-language spec, Flex scanner, tests, BPE comparison + handwritten RE→NFA→DFA theory | 2–3 | `2-lexical-analysis.pdf`, `3-lexical-analysis-II.pdf` | 🔜 in progress, see [PLAN.md](PLAN.md) |
 | M2 | **Parser + AST**: CFG for MiniLang, precedence, AST building, syntax error recovery | 4–6 | `4-parser.pdf`, `5-top-down-parser.pdf`, LR notes (week 6, not posted yet) | ⏳ |
 | M3 | **Semantic analysis**: symbol table, scopes, type checking | 7–8 | not posted yet | ⏳ |
 | M4 | **IR + code generation**: three-address code / stack bytecode / C or asm output | 9–10 | not posted yet | ⏳ |
@@ -48,6 +48,6 @@ Weeks 11–15 (global optimization, register allocation, AI compilers, agents, p
 ## Working rules
 
 1. **The language spec comes first.** `docs/LANGUAGE.md` is the single source of truth for MiniLang. Code follows the spec.
-2. **One compiler, growing.** Compiler code lives in `src/`. `projects/pN/` holds the professor's directive and our report/submission for that milestone.
-3. **Tests from day one.** Each `.mini` input in `tests/` has an expected-output file next to it, and `make test` diffs them.
+2. **One compiler, growing.** Compiler code lives in `src/`. `projects/project-N/directives/` holds the professor's text and `projects/project-N/solution/` our report and submission files.
+3. **Tests from day one.** Each input in `tests/` has an expected-output file in `expected/`, and `make test` diffs them.
 4. **Tag every submission** (`git tag p1-submission`) so we can always show what was handed in.

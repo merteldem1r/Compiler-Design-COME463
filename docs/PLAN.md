@@ -1,62 +1,66 @@
-# Current Plan — Project 1: Lexical Analysis (Milestone 1)
+# Current Plan — Project 1: Lexical Analysis
 
-> This is the working plan for the **current** milestone. When a milestone ships, move its summary to `ROADMAP.md` and rewrite this file for the next one.
+> The working plan for the **current** milestone. When it ships, summarize it in `ROADMAP.md` and rewrite this file for the next milestone.
 
-## What Project 1 asks (from lectures 3 and 4)
+**Directive:** `projects/project-1/directives/p1.md` (copied verbatim from the professor's GitHub)
+**Due: Monday, October 20, 2026, before class.** No late submissions.
+**Submit on Google Classroom:** the Part A PDF and the Part B zip (which contains REPORT.pdf).
+**Stack:** C + Flex (Path A). Solo.
 
-The directive file `projects/p1-lexical-analysis/directives/p1-lexical-analysis.md` is still **empty**. Until the official text is pasted there, this is what the slides say:
+## What is being graded
 
-> **Project-1: Specifying a PL (using flex)**
-> 1. Specify rules for identifiers, keywords, etc. for a programming language
-> 2. Write regular expressions for each of them
-> 3. Use flex (or similar) to tokenize a given input file
+| Part | What | Weight | Who does it |
+|---|---|---|---|
+| A | RE → NFA → DFA theory, **handwritten** and scanned to one PDF | 30% | You, on paper. Claude tutors and checks |
+| B | Design our own language + Flex lexer + tests + BPE comparison + report | 60% | Together |
+| Bonus | Regex → NFA → DFA visualizer (Python + graphviz) | +10% | Only if time is left |
 
-Minimum token set ("All paths must recognize some form of"):
+Part B breakdown: spec 15, correct tokenization 15, maximal munch + keyword priority + error handling 10, test suite 10, report 10, BPE comparison 10.
 
-| Category | Examples |
-|---|---|
-| Numbers | `123`, `45.67` |
-| Identifiers | `variable`, `calculate_sum` |
-| Keywords | `let`, `def`, `if`, `else` |
-| Operators | `+ - * /` |
-| Punctuation | `( ) = ,` |
+## Schedule (6 days)
 
-Tests the slides explicitly expect to pass:
+| Day | Part B (together) | Part A (you, ~1 h/day) |
+|---|---|---|
+| Wed 14 | Repo setup ✅ · **pick language name/purpose, draft token table** | A1 regexes |
+| Thu 15 | Finish `docs/LANGUAGE.md` · write `src/lexer.l` + driver · Makefile | A2 automata |
+| Fri 16 | Tests (≥3 files, ≥15 cases) + expected outputs · fix bugs (**log them for the report**) | A3 Thompson |
+| Sat 17 | BPE comparison with tiktoken · draft REPORT.md + SPEC | A4 subset + minimization |
+| Sun 18 | Export SPEC.pdf + REPORT.pdf · build zip · dry-run from a clean clone | A5 + scan to PDF |
+| Mon 20 | **Submit before class** · `git tag p1-submission` | — |
 
-```
-let x = 5        → LET ID(x) EQ NUMBER(5)
-identifier       → one ID (maximal munch, not "ident if ier")
-if / ifcondition → KEYWORD_IF / IDENTIFIER
-let x@y = 5      → LET ID(x) ID(y) EQ NUMBER(5) plus an error for '@' (skip and continue)
-```
+## Checklist
 
-Expected output style (from the `minilang.l` demo): `LINE 1: KEYWORD 'let'`, with line numbers.
+### Part B: language and lexer
+- [x] Official directive saved to `projects/project-1/directives/p1.md`
+- [x] Repo structure, `CLAUDE.md`, session/AI logs, `/wrap-up` skill, git init
+- [ ] Language name + one-sentence purpose
+- [ ] `docs/LANGUAGE.md`: token table (category → regex → example) covering **≥6 keywords, identifiers, int + float literals, ≥8 operators incl. multi-char (`==`, `<=`, `&&`), punctuation, `//` and `/* */` comments, a control structure, a loop**, plus 3 example programs (5–10 lines) and 2 design decisions with reasons
+- [ ] Design with M2–M4 in mind: `return`, functions, `{ }`, `;`, types, `true/false`, string literals
+- [ ] `src/lexer.l`, `src/tokens.h`, `src/main.c`, `Makefile` (`make`, `make test`, `make package-p1`)
+- [ ] Lexer handles: maximal munch, keyword priority, line numbers, errors (report line, skip, continue), multi-char operators, both comment kinds, unterminated `/*` at EOF
+- [ ] Tests: `tests/lexer/` ≥3 files and ≥15 distinct cases (valid programs, edge cases, error cases) with `tests/lexer/expected/`
+- [ ] Log every real bug we hit (the report needs **3 bugs**: what failed, why, how it was fixed)
 
-## Open questions (need answers before we finalize)
+### Part B: BPE comparison and report
+- [ ] `.venv` + `pip install tiktoken`; script in `projects/project-1/solution/bpe/`
+- [ ] Answer the 5 BPE questions (token counts, `42`, `@`, parser vs neural net, the Turkish sentence)
+- [ ] `REPORT.md` → `REPORT.pdf` (2 pages: design / testing and bugs / AI usage + BPE). Must cover the input `ifx`
+- [ ] `SPEC.md` → `SPEC.pdf` (1 page)
+- [ ] Submission `README.md`: author, path, build instructions, AI tools used
+- [ ] Zip layout: `project1/{README.md, SPEC.pdf, src/, tests/, output/, REPORT.pdf}`
 
-- [ ] Paste the official P1 directive: deadline, submission format (Classroom? GitHub?), report requirements
-- [ ] Implementation path: **A (C + Flex/Bison)**, B (Python + PLY), or C (OCaml)?
-- [ ] Solo or group (2–3 people)?
-- [ ] AI extension: decide early, because a tensor DSL would add tokens now (`tensor`, `matmul`, `[`, `]`)
+### Part A (handwritten, individual)
+- [ ] A1 regexes (15) · [ ] A2 automata (15) · [ ] A3 Thompson (10) · [ ] A4 subset + minimization (15) · [ ] A5 short answers (5)
+- [ ] Scan everything to one PDF with name and student ID on every page
 
-## Steps
-
-1. [ ] **Design the language**: write `docs/LANGUAGE.md` with the full token table (category, regex, example, notes). Plan for M2–M4 now: comparison ops (`== != < <= > >=`), `while`, `return`, `{ }`, `;`, comments, string literals, `true/false`, types (`int`, `float`, `bool`).
-2. [ ] **Set up the toolchain**: `brew install bison` (macOS ships Bison 2.3 from 2006; we need 3.x for M2), a `Makefile`, `git init`, and a private GitHub repo.
-3. [ ] **Write the scanner**: `src/lexer.l` + `src/tokens.h` + `src/main.c` (driver that prints tokens).
-   - Keywords before the identifier rule (rule priority)
-   - Longest operators work automatically by maximal munch (`==` vs `=`, `<=` vs `<`)
-   - Track line (and column) numbers
-   - A last catch-all `.` rule reports `LINE n: ERROR: unexpected '@'` and continues
-   - Comments and whitespace are skipped
-4. [ ] **Tests**: `tests/lexer/*.mini` + `*.expected`, and `make test` runs a diff. Cover every token, every edge case above, the empty file, and an unterminated comment/string.
-5. [ ] **Report** (`projects/p1-lexical-analysis/solution/REPORT.md`): token table with regexes, design decisions (priority, maximal munch, error strategy), sample runs, and an AI-usage acknowledgement.
-6. [ ] **Exam prep for this milestone**: for 2–3 of our regexes (identifier, number, comment), draw the Thompson NFA, then the subset-construction DFA, then the minimized DFA.
-7. [ ] **Optional extra credit in the spirit of the course**: run the same input through `tiktoken` and compare token counts (the "hands-on" slide in lecture 3).
-8. [ ] Submit, then `git tag p1-submission`.
+## Open questions
+- [ ] The assignment says groups of 2–3 (the FAQ says 2 is fine). **Confirm solo is OK** with the professor on Classroom.
+- [ ] Bonus: decide on Sat 17 based on time left.
 
 ## Decisions log
 
 | Date | Decision | Why |
 |---|---|---|
-| 2026-10-14 | Roadmap and plan written; stack still pending | First repo analysis |
+| 2026-10-14 | Path A: C + Flex | The lectures and examples are Flex-first, C is a prerequisite, and it leads naturally into Bison for M2 |
+| 2026-10-14 | Compiler code in root `src/` and `tests/`, not per project | P2–P4 extend the same lexer. Each submission zip is assembled by `make package-pN` |
+| 2026-10-14 | The repo is the agent memory (`PLAN.md`, `SESSION_LOG.md`, `AI_USAGE.md`) | Solo, multi-session, and cloud agents only see committed files |
