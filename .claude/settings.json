@@ -6,5 +6,18 @@
       "Bash(git push *)",
       "Bash(git tag *)"
     ]
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh \"$CLAUDE_PROJECT_DIR/.claude/hooks/check-wrap-up.sh\""
+          }
+        ]
+      }
+    ]
   }
 }

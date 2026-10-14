@@ -11,7 +11,7 @@ Solo student repository for **BIL/COME 463 Compiler Design** (Fall 2026, Prof. A
 | The assignment itself | `projects/project-N/directives/` |
 | The big picture across the semester | `docs/ROADMAP.md` |
 
-End every working session with **`/wrap-up`**. The repo is the only memory shared between sessions and cloud agents.
+End every working session with **`/wrap-up`**, then the student runs the printed git block, then `/exit`. The repo is the only memory shared between sessions and cloud agents. If a session starts with a `WRAP-UP CHECK` note, raise it with the student before anything else.
 
 ## Repository map
 
@@ -21,7 +21,8 @@ README.md                    human-facing intro (author, course)
 .claude/
   rules/                     binding rules, loaded automatically (see index below)
   skills/wrap-up/            /wrap-up: end-of-session handoff
-  settings.json              permissions (git write commands are denied)
+  hooks/check-wrap-up.sh     on startup, flags a previous session that skipped /wrap-up
+  settings.json              permissions (git write commands are denied) + hooks
 docs/
   PLAN.md                    current milestone plan + decisions log   ← living
   SESSION_LOG.md             one entry per session, newest first      ← living
