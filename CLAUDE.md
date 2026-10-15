@@ -27,8 +27,9 @@ docs/
   PLAN.md                    current milestone plan + decisions log   ← living
   SESSION_LOG.md             one entry per session, newest first      ← living
   AI_USAGE.md                AI prompts and mistakes, feeds reports   ← living
-  LANGUAGE.md                our language spec, source of truth (to be written)
+  LANGUAGE.md                our language spec, source of truth (Anka v0.2)
   ROADMAP.md                 semester overview and milestones
+  study/                     tutor material for handwritten parts (method + practice, never graded answers)
   lectures-notes/            course material (read-only)
 projects/
   project-N/directives/      professor's assignment text, verbatim (read-only)

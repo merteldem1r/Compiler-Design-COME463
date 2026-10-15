@@ -3,7 +3,7 @@
 > **Anka** (`.anka`) is a small, statically typed, C-like language, designed to be compiled end to end over one semester.
 > Named after the phoenix of Turkish mythology: like the bird, its compiler rises from errors (it reports them and keeps going).
 
-**Status:** v0.1, lexical structure fixed for Project 1. Sections marked *planned* are previews for later projects and may change.
+**Status:** v0.2, lexical structure fixed for Project 1 (reviewed by the student on 2026-10-15). Sections marked *planned* are previews for later projects and may change.
 **Compiler binary:** `ankac` · **Source files:** `*.anka`
 
 ---
@@ -80,6 +80,7 @@ Notes:
 - **No negative literals.** `-5` is `MINUS INT_LIT(5)`. The sign belongs to the parser (unary minus), not the lexer.
 - String escapes allowed: `\n` `\t` `\"` `\\`. Strings cannot span lines. Strings may only appear as the argument of `print` (checked in P3).
 - Floats need digits on **both** sides of `.`: `1.` and `.5` are not floats (see §2.6).
+- Leading zeros **are allowed in floats**: `007.5` is `FLOAT_LIT(007.5)`, while `007` is an error. Python 3 does the same. The ban on integer leading zeros exists because C reads `007` as *octal*; floats never had an octal meaning, so there is nothing to confuse.
 
 ### 2.5 How ambiguity is resolved
 1. **Maximal munch**: the longest possible match wins. `==` is one `EQ`, not two `ASSIGN`s. `**` is `POW`; `+=` is `PLUS_ASSIGN`; `->` is `ARROW`; `ifx` is `IDENT("ifx")`, not `IF` + `IDENT("x")`.
@@ -98,6 +99,7 @@ The lexer **reports, skips, and continues**. It never stops at the first error.
 | Invalid escape | `"a\qb"` | Report `\q`; the string token is still produced |
 | Unterminated comment | `/* ...` EOF | Report at the line where the comment opened |
 | Lone `.` | `1.` / `.5` | `.` alone is not a token, so report `'.'` (`1.` → `INT_LIT(1)` + error) |
+| Non-ASCII byte | `ı` (2 bytes in UTF-8) | Report each byte in hex, e.g. `'\xC4'`, skip it, continue |
 
 ### 2.7 Lexer traps (things our tests prove)
 
@@ -107,6 +109,7 @@ The lexer **reports, skips, and continues**. It never stops at the first error.
 | `1.5..2` | `FLOAT_LIT(1.5) DOTDOT INT_LIT(2)` | Maximal munch stops the float at `1.5` |
 | `a-->b` | `IDENT MINUS ARROW IDENT` | Munch takes `-`, then `->` |
 | `x**-2` | `IDENT POW MINUS INT_LIT` | `**` beats `*` `*` |
+| `123abc` | `INT_LIT(123) IDENT(abc)` | No single rule matches all of it, so munch splits it. Not a lexical error: the parser rejects it in P2 |
 | `/* a /* b */ c */` | *(nothing)* | Nesting depth goes 1 → 2 → 1 → 0 |
 
 ### 2.8 Output format (`ankac --tokens`)
