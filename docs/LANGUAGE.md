@@ -45,7 +45,7 @@ fn main() -> int {
 
 A `/*` with no matching `*/` before end of file is an error, reported at the line where the comment **opened**.
 
-### 2.3 Keywords (15, all reserved)
+### 2.3 Keywords (16, all reserved)
 
 | Group | Keywords | Tokens |
 |---|---|---|
@@ -74,7 +74,7 @@ Keywords are case-sensitive: `If` and `WHILE` are ordinary identifiers.
 | Punctuation | `LPAREN` `RPAREN` `LBRACE` `RBRACE` `SEMI` `COMMA` `COLON` | `(` `)` `{` `}` `;` `,` `:` | `f(a, b);` |
 | End of input | `END` (code 0, as Bison expects) | `<<EOF>>` | |
 
-That is 22 operators (10 of them multi-character) and 7 punctuation marks.
+That is 22 operators (13 of them multi-character) and 7 punctuation marks.
 
 Notes:
 - **No negative literals.** `-5` is `MINUS INT_LIT(5)`. The sign belongs to the parser (unary minus), not the lexer.

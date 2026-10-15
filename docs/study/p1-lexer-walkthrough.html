@@ -1,0 +1,1022 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Anka Lexer Walkthrough</title>
+<style>
+  :root {
+    --bg: #fbfaf7; --fg: #1f2328; --muted: #5d6470; --card: #ffffff; --border: #e3e0d8;
+    --accent: #b4441c; --accent-soft: #fbe9e1; --code-bg: #f4f2ec; --code-fg: #24292f;
+    --kw: #7a3db8; --id: #1f6feb; --lit: #1a7f37; --op: #9a6700; --err: #cf222e; --skip: #8c959f;
+    --ok-soft: #e6f4ea; --warn-soft: #fff4d6;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #15171b; --fg: #e6e6e3; --muted: #9aa1ab; --card: #1d2026; --border: #2f333b;
+      --accent: #f08a5d; --accent-soft: #3a2419; --code-bg: #22252c; --code-fg: #e6e6e3;
+      --kw: #c39bf0; --id: #79b8ff; --lit: #6fdc8c; --op: #e3b341; --err: #ff7b72; --skip: #6e7681;
+      --ok-soft: #16301f; --warn-soft: #3a3115;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #15171b; --fg: #e6e6e3; --muted: #9aa1ab; --card: #1d2026; --border: #2f333b;
+    --accent: #f08a5d; --accent-soft: #3a2419; --code-bg: #22252c; --code-fg: #e6e6e3;
+    --kw: #c39bf0; --id: #79b8ff; --lit: #6fdc8c; --op: #e3b341; --err: #ff7b72; --skip: #6e7681;
+    --ok-soft: #16301f; --warn-soft: #3a3115;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0; background: var(--bg); color: var(--fg);
+    font: 17px/1.65 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+  .layout { display: grid; grid-template-columns: 250px minmax(0, 1fr); max-width: 1180px; margin: 0 auto; }
+  nav.toc {
+    position: sticky; top: 0; height: 100vh; overflow-y: auto; padding: 28px 18px 28px 22px;
+    border-right: 1px solid var(--border); font-size: 14px;
+  }
+  nav.toc .brand { font-weight: 700; font-size: 15px; margin-bottom: 14px; }
+  nav.toc a { display: block; color: var(--muted); text-decoration: none; padding: 4px 8px; border-radius: 6px; }
+  nav.toc a:hover { background: var(--accent-soft); color: var(--fg); }
+  nav.toc .grp { margin-top: 12px; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); padding-left: 8px; }
+  main { padding: 36px 48px 120px; max-width: 860px; }
+  h1 { font-size: 34px; line-height: 1.2; margin: 0 0 8px; }
+  h2 { font-size: 26px; margin: 64px 0 12px; padding-top: 12px; border-top: 1px solid var(--border); }
+  h3 { font-size: 19px; margin: 34px 0 8px; }
+  .lead { font-size: 19px; color: var(--muted); margin-top: 0; }
+  .step { display: inline-block; font-size: 13px; font-weight: 700; color: var(--accent); letter-spacing: .06em; text-transform: uppercase; }
+  code, pre, .mono { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; }
+  code { background: var(--code-bg); padding: 1px 6px; border-radius: 5px; font-size: .88em; }
+  pre {
+    background: var(--code-bg); color: var(--code-fg); padding: 16px 18px; border-radius: 10px;
+    overflow-x: auto; font-size: 14px; line-height: 1.55; border: 1px solid var(--border);
+  }
+  pre code { background: none; padding: 0; font-size: inherit; }
+  .file-tag { display: inline-block; font-family: ui-monospace, Menlo, monospace; font-size: 12.5px; color: var(--muted); margin-bottom: -6px; }
+  .box { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 16px 20px; margin: 18px 0; }
+  .box.idea { border-left: 4px solid var(--accent); }
+  .box.ok { background: var(--ok-soft); }
+  .box.warn { background: var(--warn-soft); }
+  .box > :first-child { margin-top: 0; } .box > :last-child { margin-bottom: 0; }
+  table { border-collapse: collapse; width: 100%; margin: 14px 0; font-size: 15px; }
+  th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  th { font-size: 13px; color: var(--muted); font-weight: 600; }
+  .tablewrap { overflow-x: auto; }
+
+  /* pipeline diagram */
+  .pipeline { display: flex; flex-wrap: wrap; align-items: stretch; gap: 8px; margin: 20px 0; }
+  .stage { flex: 1 1 120px; background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; font-size: 14px; }
+  .stage b { display: block; font-size: 15px; }
+  .stage.now { border: 2px solid var(--accent); background: var(--accent-soft); }
+  .arrow { align-self: center; color: var(--muted); font-size: 20px; }
+
+  /* characters → tokens visual */
+  .chars { display: flex; flex-wrap: wrap; gap: 3px; margin: 10px 0; }
+  .chars span { font-family: ui-monospace, Menlo, monospace; font-size: 14px; min-width: 24px; text-align: center; padding: 3px 4px; border: 1px solid var(--border); border-radius: 4px; background: var(--card); }
+  .chars span.sp { color: var(--skip); }
+  .toks { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0; }
+  .tok { font-family: ui-monospace, Menlo, monospace; font-size: 13.5px; padding: 3px 9px; border-radius: 999px; border: 1px solid currentColor; }
+  .t-kw { color: var(--kw); } .t-id { color: var(--id); } .t-lit { color: var(--lit); } .t-op { color: var(--op); } .t-err { color: var(--err); } .t-skip { color: var(--skip); }
+
+  /* files diagram */
+  .files { display: grid; grid-template-columns: 1fr auto 1fr auto 1fr; gap: 8px; align-items: center; margin: 20px 0; font-size: 14px; }
+  .fbox { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; text-align: center; }
+  .fbox.gen { border-style: dashed; }
+  .fbox.out { border: 2px solid var(--accent); }
+  .fbox small { display: block; color: var(--muted); }
+
+  .flow { display: grid; grid-template-columns: 1fr; gap: 6px; margin: 20px 0; max-width: 560px; }
+  .flow .fbox { text-align: left; }
+  .flow .tool { color: var(--accent); font-size: 13.5px; padding-left: 22px; font-family: ui-monospace, Menlo, monospace; }
+  .flow .tool::before { content: "↓  "; color: var(--muted); }
+  .flow .pair { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .yes { color: var(--lit); font-weight: 600; } .no { color: var(--err); font-weight: 600; }
+  details { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 10px 16px; margin: 10px 0; }
+  details summary { cursor: pointer; font-weight: 600; }
+  details[open] summary { margin-bottom: 8px; }
+
+  /* playground */
+  .play textarea { width: 100%; min-height: 150px; font: 14px/1.5 ui-monospace, Menlo, monospace; padding: 12px; border-radius: 10px; border: 1px solid var(--border); background: var(--code-bg); color: var(--code-fg); resize: vertical; }
+  .play .controls { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 8px 0 12px; font-size: 14px; }
+  .play button { font: inherit; padding: 5px 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--card); color: var(--fg); cursor: pointer; }
+  .play button:hover { border-color: var(--accent); }
+  .play .out td { font-size: 14px; }
+  .play .out td.why { color: var(--muted); font-size: 13.5px; }
+  .play .out tr.skip td { color: var(--skip); }
+  .play .out tr.error td.name { color: var(--err); font-weight: 600; }
+
+  @media (max-width: 860px) {
+    .layout { display: block; }
+    nav.toc { display: none; }
+    main { padding: 24px 16px 80px; }
+    h1 { font-size: 28px; }
+    .files { grid-template-columns: 1fr; }
+    .files .arrow { transform: rotate(90deg); justify-self: center; }
+  }
+</style>
+</head>
+<body>
+<div class="layout">
+<nav class="toc" aria-label="Contents">
+  <div class="brand">Anka lexer walkthrough</div>
+  <div class="grp">The idea</div>
+  <a href="#building">1. What we are building</a>
+  <a href="#lexer">2. What a lexer does</a>
+  <a href="#words">3. Three words to know</a>
+  <a href="#rules">4. The two rules</a>
+  <a href="#flex">5. Flex does the hard part</a>
+  <div class="grp">The code</div>
+  <a href="#map">6. The files at a glance</a>
+  <a href="#tokens">7. tokens.h</a>
+  <a href="#lexerl">8. lexer.l</a>
+  <a href="#main">9. main.c</a>
+  <a href="#makefile">10. Makefile</a>
+  <div class="grp">Putting it together</div>
+  <a href="#build">11. Where build/ comes from</a>
+  <a href="#run">12. One run, step by step</a>
+  <a href="#play">13. Playground</a>
+  <a href="#questions">14. Questions in class</a>
+  <a href="#status">15. Done / next</a>
+</nav>
+
+<main>
+<span class="step">Project 1 · Part B</span>
+<h1>How the Anka lexer works, from zero</h1>
+<p class="lead">A plain-language tour of what we are building, why, and what every file and every important line of code does. Read it top to bottom once; then use the playground (§13) to experiment.</p>
+
+<!-- ============================================================ -->
+<h2 id="building">1. What are we building?</h2>
+<p>This semester we build <b>one compiler</b> for <b>our own programming language</b>, called <b>Anka</b> (files end in <code>.anka</code>).</p>
+<p>A <b>compiler</b> is a program that reads code written by a human and translates it into something a machine can run. It's too big to write in one go, so it is built like an <b>assembly line</b>: each station does one job and passes its result to the next. We build one station per project:</p>
+
+<div class="pipeline" role="img" aria-label="Compiler pipeline: source code, lexer (P1, now), parser (P2), semantic check (P3), code generation (P4), runnable program">
+  <div class="stage"><b>Source code</b>a <code>.anka</code> text file</div>
+  <div class="arrow">→</div>
+  <div class="stage now"><b>1 · Lexer</b>Project 1, <b>now</b><br>characters → tokens</div>
+  <div class="arrow">→</div>
+  <div class="stage"><b>2 · Parser</b>Project 2<br>tokens → tree</div>
+  <div class="arrow">→</div>
+  <div class="stage"><b>3 · Checker</b>Project 3<br>types, scopes</div>
+  <div class="arrow">→</div>
+  <div class="stage"><b>4 · Code gen</b>Project 4<br>tree → runnable code</div>
+</div>
+
+<p>Right now we are building <b>station 1, the lexer</b>. Here is a small Anka program, so you know what the language looks like:</p>
+<script type="text/x-code">
+fn main() -> int {
+    let total: int = 0;
+    for i in 0..5 {          // i = 0, 1, 2, 3, 4
+        total += i;
+    }
+    print(total);
+    return 0;
+}
+</script>
+<p>It looks like C with a few modern touches: <code>x: int</code> type annotations, <code>-&gt;</code> for the return type, and <code>0..5</code> ranges. The full rules are in <code>docs/LANGUAGE.md</code>.</p>
+
+<!-- ============================================================ -->
+<h2 id="lexer">2. What does a lexer do?</h2>
+<p>Think about reading <i>"thecatsatonthemat"</i>. Before you can understand the sentence, your brain has to split it into words: <i>the · cat · sat · on · the · mat</i>. A computer has the same problem. To it, a program is just one long row of characters:</p>
+
+<div class="chars" aria-label="the characters of: let x: int = 42;">
+  <span>l</span><span>e</span><span>t</span><span class="sp">␣</span><span>x</span><span>:</span><span class="sp">␣</span><span>i</span><span>n</span><span>t</span><span class="sp">␣</span><span>=</span><span class="sp">␣</span><span>4</span><span>2</span><span>;</span>
+</div>
+<p>The <b>lexer</b> reads those characters left to right and groups them into meaningful "words", called <b>tokens</b>:</p>
+<div class="toks">
+  <span class="tok t-kw">LET</span><span class="tok t-id">IDENT x</span><span class="tok t-op">COLON</span><span class="tok t-kw">TYPE_INT</span><span class="tok t-op">ASSIGN</span><span class="tok t-lit">INT_LIT 42</span><span class="tok t-op">SEMI</span>
+</div>
+
+<div class="box idea">
+<p><b>The lexer has four jobs:</b></p>
+<ol>
+  <li><b>Group</b> characters into tokens (<code>4</code>,<code>2</code> → one number <code>42</code>).</li>
+  <li><b>Throw away</b> what doesn't matter: spaces, tabs, newlines, comments.</li>
+  <li><b>Remember the line number</b> of every token, so later error messages can say "line 7".</li>
+  <li><b>Report characters that don't belong</b> (like <code>@</code>), then <b>skip them and keep going</b>. It never stops at the first error.</li>
+</ol>
+</div>
+<p>Why bother? Because the next station, the <b>parser</b>, then works with 7 clean tokens instead of 16 raw characters. It never has to think about spaces or comments again.</p>
+
+<!-- ============================================================ -->
+<h2 id="words">3. Three words you need</h2>
+<div class="tablewrap"><table>
+<tr><th>Word</th><th>Meaning</th><th>Example</th></tr>
+<tr><td><b>Token</b></td><td>The <i>category</i> of a word, like "noun" or "verb" in English</td><td><code>INT_LIT</code> (an integer number)</td></tr>
+<tr><td><b>Lexeme</b></td><td>The <i>exact text</i> that was found</td><td><code>42</code></td></tr>
+<tr><td><b>Pattern</b></td><td>A <b>regular expression</b> (regex) describing every possible lexeme of a token</td><td><code>0|[1-9][0-9]*</code></td></tr>
+</table></div>
+<p>A <b>regex</b> is a short formula for a set of strings. The few pieces we use:</p>
+<div class="tablewrap"><table>
+<tr><th>Regex piece</th><th>Means</th><th>Example</th></tr>
+<tr><td><code>[0-9]</code></td><td>one character from the range</td><td><code>7</code></td></tr>
+<tr><td><code>X*</code></td><td>X zero or more times</td><td><code>[0-9]*</code> → "", <code>5</code>, <code>123</code></td></tr>
+<tr><td><code>X+</code></td><td>X one or more times</td><td><code>[0-9]+</code> → <code>5</code>, <code>123</code></td></tr>
+<tr><td><code>X?</code></td><td>X optional</td><td><code>[+-]?</code> → "", <code>+</code>, <code>-</code></td></tr>
+<tr><td><code>X|Y</code></td><td>X or Y</td><td><code>0|[1-9]</code></td></tr>
+<tr><td><code>[^\n]</code></td><td>any character <b>except</b> newline</td><td></td></tr>
+<tr><td><code>"=="</code></td><td>(in Flex) exactly these characters</td><td><code>==</code></td></tr>
+<tr><td><code>.</code></td><td>(in Flex) <b>any</b> single character except newline</td><td></td></tr>
+</table></div>
+
+<!-- ============================================================ -->
+<h2 id="rules">4. The two rules that decide everything</h2>
+<p>Often <b>several patterns</b> match at the same spot. For the input <code>ifx</code>, the keyword pattern <code>if</code> matches the first 2 letters, and the identifier pattern matches all 3. Which one is right? Every lexer (and Flex) uses two rules, straight from lecture 2:</p>
+
+<div class="box idea">
+<p><b>Rule 1, maximal munch: the longest match wins.</b><br>Take as many characters as any pattern can match.</p>
+<p><b>Rule 2, priority: on a tie in length, the rule written first wins.</b><br>The order of the rules in our file matters.</p>
+</div>
+
+<div class="tablewrap"><table>
+<tr><th>Input</th><th>Who matches (how many characters)</th><th>Winner, and which rule decided</th></tr>
+<tr><td><code>==</code></td><td><code>"="</code>: 1 · <code>"=="</code>: 2</td><td><span class="tok t-op">EQ</span> by munch</td></tr>
+<tr><td><code>ifx</code></td><td>keyword <code>if</code>: 2 · identifier: 3</td><td><span class="tok t-id">IDENT ifx</span> by munch</td></tr>
+<tr><td><code>if</code></td><td>keyword <code>if</code>: 2 · identifier: <b>also 2</b></td><td><span class="tok t-kw">IF</span> by <b>priority</b> (keywords are written first)</td></tr>
+<tr><td><code>007</code></td><td>integer: only <code>0</code> (1) · leading-zero error rule: 3</td><td><span class="tok t-err">ERROR</span> by munch</td></tr>
+<tr><td><code>a--&gt;b</code></td><td>at <code>-</code>: only <code>"-"</code> fits · then at <code>-&gt;</code>: <code>"-&gt;"</code> 2 beats <code>"-"</code> 1</td><td><span class="tok t-id">IDENT</span> <span class="tok t-op">MINUS</span> <span class="tok t-op">ARROW</span> <span class="tok t-id">IDENT</span></td></tr>
+</table></div>
+<p>If you remember only one thing from this page, remember these two rules. Almost every "why does it do that?" question about the lexer is answered by one of them.</p>
+
+<!-- ============================================================ -->
+<h2 id="flex">5. We don't write the matching code: Flex does</h2>
+<p>We could write the lexer by hand, with a giant pile of <code>if (c == 'l') ...</code> statements (lecture 2 shows one; it's long and easy to get wrong). Instead we use a tool called <b>Flex</b>:</p>
+<ol>
+  <li>We write a list of <b>rules</b>. Each rule is <i>a regex</i> plus <i>a bit of C code to run when it matches</i>.</li>
+  <li>Flex turns <b>all the regexes together</b> into one <b>DFA</b>, a state machine, using exactly the steps you are doing by hand in Part A: <b>regex → NFA (Thompson) → DFA (subset construction) → minimized DFA</b>.</li>
+  <li>Flex writes that DFA out as a C file (<code>lex.yy.c</code>), with a function <code>yylex()</code>. Each time you call it, it gives you the next token.</li>
+</ol>
+<div class="box ok"><p>So Part A (theory) and Part B (code) are the <b>same thing</b> from two sides. In Part A you build the machine by hand; in Part B Flex builds it for you from our rules.</p></div>
+
+<!-- ============================================================ -->
+<h2 id="map">6. The files at a glance</h2>
+<div class="files" role="img" aria-label="lexer.l goes through flex into lex.yy.c; lex.yy.c and main.c go through the compiler into ankac">
+  <div class="fbox"><b>src/lexer.l</b><small>our rules</small></div>
+  <div class="arrow">→ flex →</div>
+  <div class="fbox gen"><b>build/lex.yy.c</b><small>generated C (a DFA)</small></div>
+  <div class="arrow">+ main.c → cc →</div>
+  <div class="fbox out"><b>build/ankac</b><small>the program you run</small></div>
+</div>
+<div class="tablewrap"><table>
+<tr><th>File</th><th>Written by</th><th>Its job, in one sentence</th></tr>
+<tr><td><code>src/tokens.h</code></td><td>us</td><td>The list of token names and their numbers, shared by everyone.</td></tr>
+<tr><td><code>src/lexer.l</code></td><td>us</td><td>The rules: which text becomes which token, what to skip, what is an error.</td></tr>
+<tr><td><code>src/main.c</code></td><td>us</td><td>The driver: opens the file, asks the lexer for tokens one by one, and prints them.</td></tr>
+<tr><td><code>Makefile</code></td><td>us</td><td>The build recipe: runs Flex, then the C compiler, in the right order.</td></tr>
+<tr><td><code>build/lex.yy.c</code></td><td>Flex</td><td>The generated scanner. We never edit it, and we never commit it to git.</td></tr>
+<tr><td><code>build/ankac</code></td><td>the C compiler</td><td>The finished program: <code>./build/ankac --tokens file.anka</code></td></tr>
+</table></div>
+
+<!-- ============================================================ -->
+<h2 id="tokens">7. <code>src/tokens.h</code>: the token list</h2>
+<p><b>Purpose.</b> The lexer and the driver must agree on what each token <i>is</i>. In C the simplest way is to give each token a <b>number</b>, with a readable name for it. That is what an <code>enum</code> does.</p>
+<span class="file-tag">src/tokens.h (shortened)</span>
+<script type="text/x-code">
+#ifndef TOKENS_H
+#define TOKENS_H
+
+typedef enum {
+    END = 0,            /* end of input */
+
+    /* keywords (16) */
+    FN = 258, LET,
+    IF, ELSE, WHILE, FOR, IN, RETURN, BREAK, CONTINUE,
+    ...
+    /* identifiers and literals */
+    IDENT, INT_LIT, FLOAT_LIT, STRING_LIT,
+    /* operators (22) */
+    PLUS, MINUS, STAR, SLASH, PERCENT, POW,
+    ...
+} token_type;
+
+#endif
+</script>
+<ul>
+  <li><b><code>enum</code> numbers names automatically.</b> <code>FN = 258</code>, so <code>LET</code> becomes 259, <code>IF</code> 260, and so on. When the lexer sees <code>let</code> it returns <b>259</b>; the driver knows that 259 means <code>LET</code>.</li>
+  <li><b>Why start at 258?</b> This is Bison's convention (Bison is the parser tool we use in Project 2), and the professor's example does the same: numbers 0–255 are reserved for single characters, 256–257 are used internally, and real tokens start at 258. Following it now means P2 needs no renumbering.</li>
+  <li><b>Why <code>END = 0</code>?</b> Bison expects the lexer to say "the file is finished" by returning <b>0</b>, so we give 0 a readable name.</li>
+  <li><b><code>#ifndef TOKENS_H</code> … <code>#endif</code></b> is an <i>include guard</i>. If two files include this header, it is still only read once, which avoids "defined twice" errors. It's standard boilerplate for every C header.</li>
+</ul>
+
+<!-- ============================================================ -->
+<h2 id="lexerl">8. <code>src/lexer.l</code>: the rules (the heart of the project)</h2>
+<p><b>Purpose.</b> This file says <b>which text becomes which token</b>. Flex reads it and generates the real scanner. A Flex file always has <b>three parts</b>, separated by <code>%%</code>:</p>
+<script type="text/x-code">
+   part 1: settings, C helper code, regex nicknames
+%%
+   part 2: the rules        pattern     { C code to run when it matches }
+%%
+   part 3: extra C code (ours is empty)
+</script>
+
+<h3>8.1 The settings line</h3>
+<script type="text/x-code">
+%option noyywrap nounput noinput yylineno
+</script>
+<div class="tablewrap"><table>
+<tr><th>Option</th><th>What it means</th></tr>
+<tr><td><code>noyywrap</code></td><td>When the file ends, simply stop. (Otherwise Flex asks a function <code>yywrap()</code> whether there's another file to read, and we would have to write it.)</td></tr>
+<tr><td><code>nounput noinput</code></td><td>Don't generate two helper functions we never use, which would cause "unused function" warnings.</td></tr>
+<tr><td><code>yylineno</code></td><td><b>Flex counts lines for us</b> in a variable called <code>yylineno</code>: every time any rule reads a <code>\n</code>, it adds 1. This is how each token knows its line number.</td></tr>
+</table></div>
+
+<h3>8.2 The C helper block <code>%{ … %}</code></h3>
+<p>Everything between <code>%{</code> and <code>%}</code> is copied unchanged into the generated C file. We put our variables and two small helper functions there.</p>
+<script type="text/x-code">
+%{
+#include <stdio.h>
+#include <ctype.h>
+#include "tokens.h"
+
+int lex_errors = 0;             /* read by main.c to choose the exit status */
+
+static int comment_depth = 0;       /* how many open comments we are inside */
+static int comment_start_line = 0;  /* line of the outermost open comment */
+
+/* Print one error line in the format of docs/LANGUAGE.md §2.8 and count it. */
+static void lex_error(int line, const char *what, const char *text)
+{
+    printf("LINE %d: %-12s %s '%s'\n", line, "ERROR", what, text);
+    lex_errors++;
+}
+%}
+</script>
+<ul>
+  <li><code>#include "tokens.h"</code> lets the rules say <code>return LET;</code> using the names from §7.</li>
+  <li><code>lex_errors</code> counts errors. At the end, <code>main.c</code> looks at it to decide the program's exit code.</li>
+  <li><code>comment_depth</code> and <code>comment_start_line</code> are needed for nested comments (§8.6).</li>
+  <li><code>lex_error(...)</code> prints one error in our standard format, for example <code>LINE 3: ERROR        unexpected character '@'</code>, and adds 1 to the counter. <code>%-12s</code> means "print this text padded to 12 characters", which keeps the columns lined up.</li>
+  <li><code>static</code> means "private to this file": nothing outside the lexer can touch it.</li>
+</ul>
+
+<h3>8.3 Regex nicknames</h3>
+<script type="text/x-code">
+DIGIT       [0-9]
+LETTER      [a-zA-Z_]
+EXPONENT    [eE][+-]?{DIGIT}+
+
+%x COMMENT
+</script>
+<p>Short names for regexes we use more than once, so the rules stay readable: <code>{DIGIT}</code> inside a rule means <code>[0-9]</code>. <code>EXPONENT</code> is the <code>e10</code> / <code>E-3</code> tail of a float. <code>%x COMMENT</code> declares a second <b>mode</b> for the lexer (explained in §8.6).</p>
+
+<h3>8.4 How a rule works</h3>
+<p>Each rule is <b>pattern</b>, then <b>action</b> in braces. Inside the action, two variables are always available: <code>yytext</code> holds the matched text, and <code>yylineno</code> the current line.</p>
+<div class="box idea">
+<p><b>Two kinds of action:</b></p>
+<ul>
+  <li><b>It <code>return</code>s a token</b>, e.g. <code>{ return LET; }</code>. Then <code>yylex()</code> stops and hands the token to whoever called it (our <code>main.c</code>).</li>
+  <li><b>It doesn't return</b>, e.g. whitespace, comments and errors. Then Flex simply <b>keeps scanning</b>. That is how "skip" works.</li>
+</ul>
+</div>
+
+<h3>8.5 Whitespace and <code>//</code> comments: skip them</h3>
+<script type="text/x-code">
+[ \t\r\n]+              { /* skip; yylineno counts the \n for us */ }
+"//"[^\n]*              { /* line comment: skip to the end of the line */ }
+</script>
+<ul>
+  <li>Rule 1: one or more spaces, tabs, <code>\r</code> (from Windows line endings) or newlines. The action is empty, so they disappear.</li>
+  <li>Rule 2: two slashes, then <b>any characters except newline</b>. So a <code>//</code> comment eats the rest of the line, and nothing else.</li>
+</ul>
+
+<h3>8.6 Block comments <code>/* … */</code>, which <b>nest</b></h3>
+<p>In Anka, comments can contain comments: <code>/* a /* b */ c */</code> is <b>one</b> comment. That's useful: you can comment out a piece of code that already has comments in it.</p>
+<div class="box warn"><p><b>Why a regex can't do this:</b> to know which <code>*/</code> closes which <code>/*</code>, you have to <b>count</b>. A DFA has a fixed, finite number of states, so it cannot count without limit (lecture: "a finite automaton cannot count"). So we add a small counter in C. This is a great point to mention in the report and in class.</p></div>
+<script type="text/x-code">
+"/*"                    { comment_depth = 1;
+                          comment_start_line = yylineno;
+                          BEGIN(COMMENT); }
+<COMMENT>"/*"           { comment_depth++;      /* comments nest */ }
+<COMMENT>"*/"           { comment_depth--;
+                          if (comment_depth == 0) BEGIN(INITIAL); }
+<COMMENT>[^/*\n]+       { /* comment text: skip */ }
+<COMMENT>\n             { /* skip; yylineno still counts it */ }
+<COMMENT>.              { /* a lone '/' or '*' inside a comment */ }
+<COMMENT><<EOF>>        { lex_error(comment_start_line, "unterminated comment", "/*");
+                          BEGIN(INITIAL);
+                          return END; }
+</script>
+<p>The lexer has <b>two modes</b>:</p>
+<ul>
+  <li><b><code>INITIAL</code></b>, the normal mode, where all the token rules are active.</li>
+  <li><b><code>COMMENT</code></b>, "we are inside a comment". Only rules starting with <code>&lt;COMMENT&gt;</code> are active here. (The <code>x</code> in <code>%x</code> means e<b>x</b>clusive: every normal rule is switched off, so a keyword inside a comment is never seen as a keyword.)</li>
+</ul>
+<p>Step by step:</p>
+<ol>
+  <li>Seeing <code>/*</code> in normal mode: set depth to 1, remember the line, and switch to comment mode with <code>BEGIN(COMMENT)</code>.</li>
+  <li>Another <code>/*</code>: depth + 1. A <code>*/</code>: depth − 1. When depth reaches 0, switch back with <code>BEGIN(INITIAL)</code>.</li>
+  <li>Any other text: skip it. Ordinary text is skipped in big chunks; a single <code>/</code> or <code>*</code> (as in <code>a*b</code>) is skipped by <code>.</code>. Munch makes sure <code>*/</code> (2 characters) beats <code>.</code> (1).</li>
+  <li><code>&lt;&lt;EOF&gt;&gt;</code> means "the file ended". If that happens <b>inside</b> a comment, the comment was never closed. We report it at the <b>line where it opened</b>, because that's where the programmer needs to look.</li>
+</ol>
+<div class="tablewrap"><table>
+<tr><th>Reading <code>/* a /* b */ c */</code></th><th><code>/*</code></th><th>a</th><th><code>/*</code></th><th>b</th><th><code>*/</code></th><th>c</th><th><code>*/</code></th></tr>
+<tr><td>depth after</td><td>1</td><td>1</td><td>2</td><td>2</td><td>1</td><td>1</td><td><b>0 → normal mode</b></td></tr>
+</table></div>
+
+<h3>8.7 Keywords, then identifiers (order matters!)</h3>
+<script type="text/x-code">
+"fn"                    { return FN; }
+"let"                   { return LET; }
+"if"                    { return IF; }
+...                       (16 keywords in total)
+"true"                  { return TRUE; }
+"false"                 { return FALSE; }
+
+{LETTER}({LETTER}|{DIGIT})*     { return IDENT; }
+</script>
+<ul>
+  <li>Quoted text means "exactly these characters". The <b>16 keywords come before the identifier rule</b>. On <code>while</code>, both match 5 characters, so it's a tie and <b>priority</b> picks the keyword.</li>
+  <li>If we moved the identifier rule to the top, <i>every</i> keyword would become an <code>IDENT</code>, which is the classic beginner bug.</li>
+  <li>An identifier starts with a letter or <code>_</code>, then any number of letters, digits or <code>_</code>. So <code>_tmp</code> and <code>x1</code> are identifiers; <code>1x</code> is not, because it starts with a digit.</li>
+</ul>
+
+<h3>8.8 Numbers</h3>
+<script type="text/x-code">
+{DIGIT}+"."{DIGIT}+{EXPONENT}?  { return FLOAT_LIT; }    /* 3.14   2.5e-3 */
+{DIGIT}+{EXPONENT}              { return FLOAT_LIT; }    /* 1e10 */
+0|[1-9]{DIGIT}*                 { return INT_LIT; }      /* 0   42 */
+0{DIGIT}+                       { lex_error(yylineno, "integer with leading zeros", yytext); }
+</script>
+<div class="tablewrap"><table>
+<tr><th>Rule</th><th>Meaning</th><th>Why</th></tr>
+<tr><td>Float with a dot</td><td>digits, a real dot <code>"."</code>, digits, optional exponent</td><td>Digits must be on <b>both sides</b> of the dot, so <code>1.</code> and <code>.5</code> are not floats. That's what makes <code>0..5</code> work: <code>0.</code> can never start a float, so the lexer reads <code>0</code>, then <code>..</code>, then <code>5</code>.</td></tr>
+<tr><td>Float with exponent only</td><td>digits + exponent</td><td><code>1e10</code> is a float even without a dot.</td></tr>
+<tr><td>Integer</td><td><code>0</code> alone, or starting with 1–9</td><td>No leading zeros: the same idea as Part A question A1.1(d).</td></tr>
+<tr><td>Leading-zero error</td><td><code>0</code> followed by more digits</td><td>Exists only to catch <code>007</code>. Without it, munch would read <code>007</code> as three tokens <code>0 0 7</code>, which is confusing. This rule matches 3 characters and beats the integer's 1, so the whole thing is reported as one clear error.</td></tr>
+</table></div>
+<p><b>Note:</b> <code>"."</code> in quotes is a real dot. A bare <code>.</code> in Flex means "any character". Also, <code>007.5</code> <i>is</i> a valid float (your decision, same as Python): the float rule matches 5 characters and beats the error rule's 3.</p>
+
+<h3>8.9 Strings</h3>
+<script type="text/x-code">
+\"([^"\\\n]|\\.)*\"             { check_escapes(yytext, yylineno);
+                                  return STRING_LIT; }
+\"([^"\\\n]|\\.)*               { lex_error(yylineno, "unterminated string", yytext); }
+</script>
+<p>Read the first pattern piece by piece:</p>
+<ol>
+  <li><code>\"</code> an opening quote,</li>
+  <li><code>( … )*</code> then zero or more of:
+    <ul><li><code>[^"\\\n]</code> a normal character (not a quote, not a backslash, not a newline), <b>or</b></li>
+        <li><code>\\.</code> a backslash followed by any character (an <i>escape</i>, like <code>\n</code> or <code>\"</code>),</li></ul></li>
+  <li><code>\"</code> a closing quote.</li>
+</ol>
+<p>That's why <code>"say \"hi\""</code> stays one string: <code>\"</code> is read as an escape, so it doesn't close the string.</p>
+<div class="box idea"><p><b>The second rule is the same without the closing quote.</b> If the string is closed properly, rule 1 matches one character more (the <code>"</code>), so <b>munch</b> picks it. If the line ends before any closing quote, only rule 2 can match, and we report "unterminated string". Munch alone decides; there is no <code>if</code> anywhere. The newline isn't consumed, so the next line is read normally.</p></div>
+<p><b>Checking escapes in C.</b> The pattern accepts <i>any</i> backslash pair, but Anka only allows <code>\n</code> <code>\t</code> <code>\"</code> <code>\\</code>. Writing that restriction into the regex would make it much harder to read, so a tiny C function walks through the matched text instead:</p>
+<script type="text/x-code">
+static void check_escapes(const char *s, int line)
+{
+    for (int i = 1; s[i] != '\0'; i++) {          /* i = 1: skip the opening quote */
+        if (s[i] == '\\') {                       /* found a backslash */
+            char c = s[i + 1];                    /* the character after it */
+            if (c != 'n' && c != 't' && c != '"' && c != '\\') {
+                char bad[3] = { '\\', c, '\0' };
+                lex_error(line, "invalid escape", bad);
+            }
+            i++;                /* skip the escaped character */
+        }
+    }
+}
+</script>
+<p>For <code>"a\qb"</code> it reports <code>invalid escape '\q'</code>, and the string token is <b>still returned</b> (report the problem, keep going). The <code>i++</code> at the end skips the character after the backslash, so in <code>"\\q"</code> the pair <code>\\</code> is one escape and the <code>q</code> is ordinary text.</p>
+
+<h3>8.10 Operators and punctuation</h3>
+<script type="text/x-code">
+"*"     { return STAR; }         "**"    { return POW; }
+"="     { return ASSIGN; }       "=="    { return EQ; }
+"-"     { return MINUS; }        "->"    { return ARROW; }
+"+="    { return PLUS_ASSIGN; }  ".."    { return DOTDOT; }
+"("     { return LPAREN; }       ";"     { return SEMI; }
+...      (22 operators and 7 punctuation marks in total)
+</script>
+<p>One rule per symbol, and <b>no lookahead code at all</b>: munch automatically makes <code>**</code> one <code>POW</code> instead of two <code>STAR</code>s, and <code>==</code> one <code>EQ</code> instead of two <code>ASSIGN</code>s.</p>
+
+<h3>8.11 End of file, and the safety net (last rule!)</h3>
+<script type="text/x-code">
+<<EOF>>                 { return END; }
+
+.                       { unsigned char c = (unsigned char)yytext[0];
+                          if (c >= 128 || !isprint(c)) {     /* not printable ASCII */
+                              char hex[5];
+                              snprintf(hex, sizeof hex, "\\x%02X", c);
+                              lex_error(yylineno, "unexpected byte", hex);
+                          } else {
+                              lex_error(yylineno, "unexpected character", yytext);
+                          } }
+</script>
+<ul>
+  <li><b>End of file</b>: return <code>END</code> (0), so the driver stops asking for tokens.</li>
+  <li><b><code>.</code> matches any one character</b>, which makes it the safety net (lecture 2: "write a rule matching all bad strings, put it last"). It is last and matches only 1 character, so it can only win when <b>no other rule matches at all</b>, like <code>@</code> or <code>#</code>. We report the character, skip it, and continue: "report, skip, continue".</li>
+  <li><b>Why hex?</b> A Turkish letter like <code>ı</code> is stored as <b>two bytes</b> (<code>C4 B1</code>) in UTF-8. Printing half a letter shows garbage, so for any byte that isn't normal printable ASCII we print its code instead, e.g. <code>'\xC4'</code>.</li>
+  <li><b><code>(unsigned char)</code></b>: in C, a plain <code>char</code> can be <i>negative</i> for bytes above 127, and <code>isprint()</code> must not receive a negative number. The cast prevents that bug.</li>
+</ul>
+
+<!-- ============================================================ -->
+<h2 id="main">9. <code>src/main.c</code>: the driver</h2>
+<p><b>Purpose.</b> The lexer only <i>finds</i> tokens. Something has to open the file, keep asking for the next token, and print the results. That's the driver, the same role as <code>test.c</code> in the professor's example.</p>
+
+<h3>9.1 Borrowing the lexer's variables</h3>
+<script type="text/x-code">
+extern FILE *yyin;        /* the file Flex reads from */
+extern char *yytext;      /* the text of the last token */
+extern int yylineno;      /* the current line number */
+extern int lex_errors;    /* our error counter, from lexer.l */
+int yylex(void);          /* "give me the next token" */
+</script>
+<p>These all live in the generated <code>lex.yy.c</code>. <code>extern</code> tells the C compiler: "this exists in another file; trust me, the linker will connect them".</p>
+
+<h3>9.2 Number → name</h3>
+<script type="text/x-code">
+static const char *token_name(int t)
+{
+    switch (t) {
+    case FN:           return "FN";
+    case LET:          return "LET";
+    ...                         (one line per token)
+    default:           return "UNKNOWN";
+    }
+}
+</script>
+<p>The lexer returns numbers (259); people want names (<code>LET</code>). A plain <code>switch</code> is long, but easy to read and impossible to get out of order.</p>
+
+<h3>9.3 <code>main()</code>: the loop</h3>
+<script type="text/x-code">
+int main(int argc, char *argv[])
+{
+    if (argc < 2 || argc > 3 || strcmp(argv[1], "--tokens") != 0) {
+        fprintf(stderr, "usage: ankac --tokens [file.anka]\n");
+        return 2;                               /* wrong command line */
+    }
+
+    FILE *in = NULL;
+    if (argc == 3) {                            /* a file name was given */
+        in = fopen(argv[2], "r");
+        if (in == NULL) { perror(argv[2]); return 2; }
+        yyin = in;                              /* tell Flex to read it */
+    }
+
+    int t;
+    while ((t = yylex()) != END) {              /* ask for tokens until the end */
+        printf("LINE %d: %-12s '%s'\n", yylineno, token_name(t), yytext);
+    }
+    printf("LINE %d: END\n", yylineno);
+
+    if (in != NULL) fclose(in);
+    return lex_errors > 0 ? 1 : 0;              /* 1 = there were lexical errors */
+}
+</script>
+<ol>
+  <li><b>Check the command line.</b> It must be <code>ankac --tokens [file]</code>; otherwise print how to use it and exit with code <b>2</b>.</li>
+  <li><b>Open the file</b> and point Flex's <code>yyin</code> at it. With no file name, Flex reads from the keyboard (standard input).</li>
+  <li><b>The loop.</b> Each <code>yylex()</code> call runs the rules until one <code>return</code>s a token, so spaces, comments and errors are handled <i>inside</i> that call. We print the token, then ask again, until <code>END</code>.</li>
+  <li><b>Exit code</b>: 0 means "clean", 1 means "there were lexical errors". Scripts, and later our parser, can check this number without reading the output.</li>
+</ol>
+<div class="box idea"><p><b>Why print here and not inside the rules?</b> The professor's example prints inside each rule. We keep the rules "pure" (they only <code>return</code>), because in Project 2 the <b>parser</b> will call <code>yylex()</code> directly and needs tokens, not printouts. This way the lexer needs no changes in P2.</p></div>
+
+<!-- ============================================================ -->
+<h2 id="makefile">10. <code>Makefile</code>: the build recipe</h2>
+<p><b>Purpose.</b> Building takes several commands in the right order. <code>make</code> runs them for you, and <b>only redoes the steps whose input files changed</b>.</p>
+<p>A Makefile rule reads: <code>target: what-it-depends-on</code>, then the command on the next line (indented with a <b>tab</b>). Ours has four build steps:</p>
+<script type="text/x-code">
+# Step 1: Flex turns the rules in lexer.l into a C scanner (a DFA as tables).
+build/lex.yy.c: src/lexer.l src/tokens.h
+	flex -o build/lex.yy.c src/lexer.l
+
+# Step 2: compile the generated scanner (one Flex warning silenced, see below).
+build/lex.yy.o: build/lex.yy.c src/tokens.h
+	cc $(CFLAGS) -Wno-sign-compare -Isrc -c -o build/lex.yy.o build/lex.yy.c
+
+# Step 3: compile our driver with every warning on.
+build/main.o: src/main.c src/tokens.h
+	cc $(CFLAGS) -Isrc -c -o build/main.o src/main.c
+
+# Step 4: link the two pieces into one program.
+build/ankac: build/lex.yy.o build/main.o
+	cc -o build/ankac build/lex.yy.o build/main.o
+</script>
+<p>(This is simplified: the real file uses variables like <code>$(BUILD)</code> and <code>$@</code> for "the target's name", but it does exactly this.)</p>
+
+<h3>10.1 The compiler flags (<code>CFLAGS</code>)</h3>
+<div class="tablewrap"><table>
+<tr><th>Flag</th><th>Meaning</th></tr>
+<tr><td><code>-std=c11</code></td><td>Use the C11 standard.</td></tr>
+<tr><td><code>-Wall -Wextra</code></td><td>Turn on most warnings. Warnings often point at real bugs.</td></tr>
+<tr><td><code>-pedantic</code></td><td>Complain about anything that isn't strict standard C, so the code builds the same on macOS and on the Linux grading machine.</td></tr>
+<tr><td><code>-D_POSIX_C_SOURCE=200809L</code></td><td>The generated scanner calls <code>fileno()</code>, which belongs to POSIX, not plain C. In strict C11 mode Linux hides it and gcc warns. This flag makes it visible. It isn't needed on macOS (we checked); it's a precaution until we test a Linux build.</td></tr>
+<tr><td><code>-Wno-sign-compare</code></td><td><b>Only for the generated file.</b> Flex's own code compares a signed and an unsigned number, and <code>-Wextra</code> warns about it. We can't edit generated code, so we silence just that one warning, just there. Our <code>main.c</code> still gets every warning. This is <b>bug #1</b> in our bug log for the report.</td></tr>
+</table></div>
+
+<h3>10.2 The other commands</h3>
+<ul>
+  <li><b><code>make test</code></b>: for each <code>tests/lexer/X.anka</code>, run <code>ankac</code> and compare the output to <code>tests/lexer/expected/X.out</code> with <code>diff</code>. It prints PASS or FAIL per file. This is called <b>golden-file testing</b>: the expected file is the "golden" correct answer. (The tests themselves are the next step.)</li>
+  <li><b><code>make clean</code></b> deletes the whole <code>build/</code> folder. Everything in it can be regenerated, which is why <code>build/</code> is in <code>.gitignore</code> and never committed.</li>
+  <li><b><code>make CC=gcc-15</code></b> builds with a different compiler. That's how we checked that gcc builds it without warnings too.</li>
+</ul>
+
+<!-- ============================================================ -->
+<h2 id="build">11. Where the <code>build/</code> folder comes from</h2>
+<p class="lead" style="font-size:17px">You never create <code>build/</code> by hand. <b>The <code>make</code> command creates it</b>, by following the recipe in our <code>Makefile</code>. Everything inside is <b>generated</b> from our three source files.</p>
+
+<div class="box idea">
+<p><b>Three facts to remember about <code>build/</code>:</b></p>
+<ul>
+  <li><b>Never edit</b> anything in it. Your changes would be overwritten by the next <code>make</code>.</li>
+  <li><b>Never commit</b> it to git (it's listed in <code>.gitignore</code>). Anyone can regenerate it from <code>src/</code>.</li>
+  <li><b>Safe to delete</b> at any time: <code>make clean</code> removes it, and <code>make</code> builds it again in about a second.</li>
+</ul>
+</div>
+
+<h3>11.1 What's inside</h3>
+<div class="tablewrap"><table>
+<tr><th>File</th><th>Size</th><th>Made from</th><th>By</th><th>What it is</th></tr>
+<tr><td><code>lex.yy.c</code></td><td>2,217 lines</td><td><code>src/lexer.l</code> (153 lines)</td><td>flex</td><td>C source code: our rules turned into a DFA, plus the <code>yylex()</code> function that runs it</td></tr>
+<tr><td><code>lex.yy.o</code></td><td>24 KB</td><td><code>lex.yy.c</code></td><td>cc</td><td>Machine code for the lexer. Not runnable on its own</td></tr>
+<tr><td><code>main.o</code></td><td>5 KB</td><td><code>src/main.c</code></td><td>cc</td><td>Machine code for the driver. Not runnable on its own</td></tr>
+<tr><td><code>ankac</code></td><td>54 KB</td><td><code>lex.yy.o</code> + <code>main.o</code></td><td>cc (linker)</td><td><b>The finished program</b> you run</td></tr>
+</table></div>
+
+<h3>11.2 The flow: what comes from what</h3>
+<div class="flow" role="img" aria-label="lexer.l goes through flex to lex.yy.c, which is compiled to lex.yy.o; main.c is compiled to main.o; both object files are linked into ankac">
+  <div class="pair">
+    <div class="fbox"><b>src/lexer.l</b><small>our rules (153 lines)</small></div>
+    <div class="fbox"><b>src/main.c</b><small>our driver</small></div>
+  </div>
+  <div class="pair">
+    <div class="tool">step 1 · flex</div>
+    <div class="tool">step 3 · cc -c</div>
+  </div>
+  <div class="pair">
+    <div class="fbox gen"><b>build/lex.yy.c</b><small>generated C: the DFA (2,217 lines)</small></div>
+    <div class="fbox gen"><b>build/main.o</b><small>machine code, incomplete</small></div>
+  </div>
+  <div class="pair">
+    <div class="tool">step 2 · cc -c</div>
+    <div></div>
+  </div>
+  <div class="pair">
+    <div class="fbox gen"><b>build/lex.yy.o</b><small>machine code, incomplete</small></div>
+    <div></div>
+  </div>
+  <div class="tool">step 4 · cc (link both .o files together)</div>
+  <div class="fbox out"><b>build/ankac</b><small>the program you run: <code>./build/ankac --tokens file.anka</code></small></div>
+</div>
+<p><code>src/tokens.h</code> doesn't appear as a box because it isn't compiled on its own. It is <b>pasted into</b> both <code>lex.yy.c</code> and <code>main.c</code> by <code>#include</code>, which is how both sides agree that 259 means <code>LET</code>.</p>
+<p>These are the exact commands <code>make</code> runs, in order:</p>
+<script type="text/x-code">
+mkdir -p build                                                   # step 0: create the folder
+flex -o build/lex.yy.c src/lexer.l                               # step 1: rules -> C
+cc <flags> -Wno-sign-compare -Isrc -c -o build/lex.yy.o build/lex.yy.c   # step 2: C -> machine code
+cc <flags> -Isrc -c -o build/main.o src/main.c                    # step 3: C -> machine code
+cc -o build/ankac build/lex.yy.o build/main.o                    # step 4: link -> program
+</script>
+<p>(<code>&lt;flags&gt;</code> is <code>-std=c11 -Wall -Wextra -pedantic -D_POSIX_C_SOURCE=200809L</code>, explained in §10.1. <code>-Isrc</code> means "look in <code>src/</code> when an <code>#include</code> asks for <code>tokens.h</code>".)</p>
+
+<h3>11.3 Step 1 · <code>flex</code>: rules become a DFA written in C</h3>
+<p>This is where Part A becomes real. Flex takes our <b>62 rules</b> (61 written by us, plus one default rule Flex always adds), combines all their regexes, and runs <b>regex → NFA → DFA → minimized DFA</b> on them. The result is a single DFA with <b>130 states</b>, which Flex writes into <code>lex.yy.c</code> as C arrays (tables). The most important ones:</p>
+<div class="tablewrap"><table>
+<tr><th>Table</th><th>What it stores</th></tr>
+<tr><td><code>yy_ec[256]</code></td><td>For every possible byte (0–255): its <b>character class</b>. Characters the DFA treats identically get the same class number.</td></tr>
+<tr><td><code>yy_accept[130]</code></td><td>For every state: is it accepting? If yes, <b>for which rule</b>.</td></tr>
+<tr><td><code>yy_nxt</code>, <code>yy_base</code>, <code>yy_chk</code>, <code>yy_def</code></td><td>The transition table, "in state S, reading class c, go to state T", stored in a compressed form so it takes less memory.</td></tr>
+</table></div>
+
+<p><b>Character classes, with real numbers from our <code>lex.yy.c</code>.</b> A DFA table needs one column per input symbol. With 256 possible bytes that's a lot of columns, so Flex first <b>groups bytes that behave the same everywhere</b>. Our 256 bytes collapse into just <b>46 classes</b>:</p>
+<div class="tablewrap"><table>
+<tr><th>Characters</th><th>Class</th><th>Why they are grouped (or kept apart)</th></tr>
+<tr><td><code>1</code> <code>2</code> … <code>9</code></td><td>17</td><td>Every rule treats them the same.</td></tr>
+<tr><td><code>0</code></td><td>16</td><td><b>Kept apart from 1–9</b>, because the rules <code>0|[1-9]…</code> and <code>0{DIGIT}+</code> (leading-zero error) treat <code>0</code> differently.</td></tr>
+<tr><td><code>x z A Z _ d g j m q v y</code> and more</td><td>23</td><td>Letters that appear in <b>no keyword</b>: for the DFA they're all just "an identifier letter".</td></tr>
+<tr><td><code>a</code> · <code>e</code> · <code>f</code> · <code>i</code> · <code>E</code></td><td>26 · 29 · 30 · 32 · 24</td><td>Each gets <b>its own class</b>, because keywords (<code>if</code>, <code>fn</code>, <code>false</code>, …) or the exponent (<code>e</code>/<code>E</code>) need to tell them apart.</td></tr>
+<tr><td>space, <code>\t</code>, <code>\r</code></td><td>2</td><td>All handled by the whitespace rule. (<code>\n</code> is class 3: it also matters for <code>//</code> comments and strings.)</td></tr>
+<tr><td><code>@</code> <code>#</code> and every non-ASCII byte</td><td>1</td><td>No rule except the catch-all <code>.</code> cares about them.</td></tr>
+</table></div>
+<p>This is a real-world version of the minimization idea from Part A: merging things that behave the same makes the machine smaller.</p>
+
+<p><b>The <code>yylex()</code> loop: maximal munch in about ten lines.</b> Flex also writes the function that runs the DFA. Here is its core, from <code>lex.yy.c</code> (comments added):</p>
+<script type="text/x-code">
+yy_current_state = yy_start;                      // begin in the start state
+do {
+    yy_c = yy_ec[*yy_cp];                         // which CLASS is this character?
+    if (yy_accept[yy_current_state]) {            // are we in an accepting state?
+        yy_last_accepting_state = yy_current_state;   //   remember it ...
+        yy_last_accepting_cpos  = yy_cp;              //   ... and how far we got
+    }
+    yy_current_state = yy_nxt[ ... ];             // follow the transition
+    ++yy_cp;                                      // move to the next character
+} while ( /* the DFA can still continue */ );
+// the DFA got stuck: go BACK to the last accepting position we remembered
+</script>
+<div class="box idea"><p><b>This is exactly maximal munch.</b> The DFA keeps reading <b>as long as it can</b>, remembers the <b>last accepting state</b> it passed through, and when it gets stuck it backs up to that point. The longest match therefore always wins, with no special code for <code>==</code> or <code>ifx</code>.</p></div>
+
+<p>Two traces. The state names are descriptive labels; the real states are just numbers.</p>
+<div class="tablewrap"><table>
+<tr><th>Input <code>==x</code></th><th>DFA state after reading it</th><th>Accepting?</th><th>Remembered</th></tr>
+<tr><td><code>=</code></td><td>"seen <code>=</code>"</td><td class="yes">yes (ASSIGN)</td><td>1 char → ASSIGN</td></tr>
+<tr><td><code>=</code></td><td>"seen <code>==</code>"</td><td class="yes">yes (EQ)</td><td>2 chars → EQ</td></tr>
+<tr><td><code>x</code></td><td>no transition, stuck</td><td>—</td><td>back up → <b>EQ <code>==</code></b>; the next call starts at <code>x</code></td></tr>
+</table></div>
+<div class="tablewrap"><table>
+<tr><th>Input <code>ifx</code> (then a space)</th><th>DFA state after reading it</th><th>Accepting?</th><th>Remembered</th></tr>
+<tr><td><code>i</code></td><td>"identifier, could still become <code>if</code>/<code>in</code>/<code>int</code>"</td><td class="yes">yes (IDENT)</td><td>1 char → IDENT</td></tr>
+<tr><td><code>f</code></td><td>"exactly <code>if</code>"</td><td class="yes">yes: <b>both</b> IF and IDENT fit</td><td>2 chars → <b>IF</b></td></tr>
+<tr><td><code>x</code></td><td>"identifier only"</td><td class="yes">yes (IDENT)</td><td>3 chars → IDENT</td></tr>
+<tr><td>space</td><td>no transition, stuck</td><td>—</td><td>back up → <b>IDENT <code>ifx</code></b></td></tr>
+</table></div>
+<div class="box ok"><p><b>Where does priority live?</b> In the state "exactly <code>if</code>", two rules accept: the keyword and IDENT. A DFA state can only store <b>one</b> answer, so when building <code>yy_accept</code> Flex stores <b>the rule that appears first in <code>lexer.l</code></b>. Rule priority is decided once, when the table is built, not while scanning. That's why the order of rules in our file matters.</p></div>
+
+<p><b>Our actions are pasted in.</b> After a match, a big <code>switch</code> runs the action of the winning rule. Our C code from <code>lexer.l</code> is copied in unchanged:</p>
+<script type="text/x-code">
+case 4:                                   /* rule number 4 = <COMMENT>"/*" */
+YY_RULE_SETUP
+#line 62 "src/lexer.l"                    /* "this code came from lexer.l, line 62" */
+{ comment_depth++;      /* comments nest */ }
+	YY_BREAK
+</script>
+<p>The <code>#line</code> markers make compiler errors point to <b>our</b> <code>lexer.l</code> instead of the 2,217-line generated file, so a mistake in an action is reported where we can fix it.</p>
+
+<h3>11.4 Steps 2 and 3 · <code>cc -c</code>: C becomes machine code (<code>.o</code> files)</h3>
+<p>The C compiler translates each <code>.c</code> file into <b>machine code</b>, the instructions the processor understands. The <code>-c</code> flag means "compile only, don't make a program yet". The result is an <b>object file</b> (<code>.o</code>).</p>
+<p>Each object file is <b>incomplete on purpose</b>, because it uses things that live in the other file. The tool <code>nm</code> lists the names inside an object file. This is real output, simplified:</p>
+<div class="tablewrap"><table>
+<tr><th></th><th><code>main.o</code></th><th><code>lex.yy.o</code></th></tr>
+<tr><td><b>Needs from elsewhere</b><br><small>(nm shows these as <code>U</code>, "undefined")</small></td><td><code>yylex</code>, <code>yytext</code>, <code>yylineno</code>, <code>yyin</code>, <code>lex_errors</code>, plus <code>printf</code>, <code>fopen</code>, <code>strcmp</code> … from the C library</td><td>only C library functions</td></tr>
+<tr><td><b>Provides</b></td><td><code>main</code></td><td><code>yylex</code>, <code>yytext</code>, <code>yylineno</code>, <code>yyin</code>, <code>lex_errors</code></td></tr>
+</table></div>
+<p>That's what the <code>extern</code> lines in <code>main.c</code> (§9.1) are for: they tell the compiler "<code>yylex</code> and friends exist <b>somewhere else</b>; leave a hole for them". Each "Needs" in one column is filled by a "Provides" in the other.</p>
+<p>Why compile them <b>separately</b> instead of in one command? So each file can get its own flags. The generated <code>lex.yy.c</code> gets <code>-Wno-sign-compare</code> (Flex's own harmless warning, bug #1), and <b>our</b> <code>main.c</code> keeps every warning switched on.</p>
+
+<h3>11.5 Step 4 · linking: two halves become one program</h3>
+<p>The <b>linker</b> (run by the same <code>cc</code> command) takes both <code>.o</code> files and <b>fills every hole</b>: <code>main.o</code>'s call to <code>yylex</code> is connected to the <code>yylex</code> in <code>lex.yy.o</code>. It also connects <code>printf</code>, <code>fopen</code> and the rest to the system's C library. The result, <code>build/ankac</code>, is a complete program you can run.</p>
+<p>If a piece is missing, linking fails. Here is the real message when we try to build the program from <code>main.o</code> alone, without <code>lex.yy.o</code>:</p>
+<script type="text/x-code">
+$ cc -o ankac build/main.o
+Undefined symbols for architecture arm64:
+  "_lex_errors", referenced from:
+      _main in main.o
+  ...
+</script>
+<p>It says "<code>main.o</code> needs <code>lex_errors</code> (and <code>yylex</code>, …), but nobody provides them". (C names get a leading <code>_</code> at this level on macOS.)</p>
+
+<h3>11.6 Why <code>make</code> doesn't redo everything every time</h3>
+<p><code>make</code> compares <b>file modification times</b>. A step runs only if its output file is <b>older</b> than one of its inputs, meaning an input changed since the output was last made. The <code>Makefile</code> lists the inputs of each output:</p>
+<script type="text/x-code">
+build/lex.yy.c  ←  src/lexer.l, src/tokens.h
+build/lex.yy.o  ←  build/lex.yy.c, src/tokens.h
+build/main.o    ←  src/main.c, src/tokens.h
+build/ankac     ←  build/lex.yy.o, build/main.o
+</script>
+<p>We tested it:</p>
+<div class="tablewrap"><table>
+<tr><th>What you changed</th><th>What <code>make</code> re-ran</th><th>Why</th></tr>
+<tr><td><code>src/main.c</code></td><td>step 3 + step 4</td><td>Only <code>main.o</code> depends on it, and then <code>ankac</code> depends on <code>main.o</code>. The lexer isn't rebuilt.</td></tr>
+<tr><td><code>src/lexer.l</code></td><td>steps 1 → 4</td><td>Everything after it in the chain is out of date.</td></tr>
+<tr><td><code>src/tokens.h</code></td><td>steps 1 → 4</td><td>Both sides include it, so both must be rebuilt.</td></tr>
+<tr><td>nothing</td><td>nothing: <code>Nothing to be done for 'all'</code></td><td>Every output is newer than its inputs.</td></tr>
+</table></div>
+<p style="font-size:14px;color:var(--muted)">A small quirk: the <code>make</code> on macOS (version 3.81) compares times only to the <b>second</b>. If you save a file in the same second as the last build, <code>make</code> may think nothing changed. In normal use that never happens.</p>
+
+<h3>11.7 How we found a mistake in the spec this way</h3>
+<div class="box warn"><p>The generated file contains <code>#define YY_NUM_RULES 62</code>. Counting our rules group by group only reaches 62 with <b>16</b> keyword rules, but the spec said "15 keywords". Recounting by hand (fn, let, if, else, while, for, in, return, break, continue, print, int, float, bool, true, false) gives <b>16</b>. The same check showed the spec's "10 multi-character operators" is really <b>13</b>. The code was right; the numbers in the text were wrong (written by the AI). Both are now fixed and logged in <code>docs/AI_USAGE.md</code>, because the report must list what the AI got wrong.</p></div>
+
+<h3>11.8 Try it yourself</h3>
+<script type="text/x-code">
+make clean                         # delete build/
+make                               # watch the 4 steps run
+ls -l build/                       # the 4 generated files
+grep -n "YY_NUM_RULES" build/lex.yy.c      # 62 rules
+grep -n "yy_ec\[256\]" build/lex.yy.c      # the character-class table
+nm build/main.o                    # what main.o needs (U) and provides (T)
+make                               # "Nothing to be done": nothing changed
+</script>
+
+<!-- ============================================================ -->
+<h2 id="run">12. One run, step by step</h2>
+<p>Input: <code>let x@y = 5;</code>. Here is what happens on each call to <code>yylex()</code>:</p>
+<div class="tablewrap"><table>
+<tr><th>Call</th><th>Inside the lexer</th><th>Printed</th></tr>
+<tr><td>1</td><td><code>let</code>: the keyword and the identifier both match 3 characters → tie → keyword is first → <code>return LET</code></td><td class="mono">LINE 1: LET          'let'</td></tr>
+<tr><td>2</td><td>space: whitespace rule, no return, keep going · <code>x</code>: only the identifier matches → <code>return IDENT</code></td><td class="mono">LINE 1: IDENT        'x'</td></tr>
+<tr><td>3</td><td><code>@</code>: no rule matches except the safety net <code>.</code> → error printed, no return, keep going · <code>y</code> → <code>return IDENT</code></td><td class="mono">LINE 1: ERROR        unexpected character '@'<br>LINE 1: IDENT        'y'</td></tr>
+<tr><td>4</td><td>space skipped · <code>=</code>: <code>"="</code> matches 1; <code>"=="</code> can't (the next character is a space) → <code>return ASSIGN</code></td><td class="mono">LINE 1: ASSIGN       '='</td></tr>
+<tr><td>5–6</td><td><code>5</code> → <code>INT_LIT</code> · <code>;</code> → <code>SEMI</code></td><td class="mono">LINE 1: INT_LIT      '5'<br>LINE 1: SEMI         ';'</td></tr>
+<tr><td>7</td><td>end of file → <code>return END</code>, and the loop in <code>main.c</code> stops</td><td class="mono">LINE 1: END</td></tr>
+</table></div>
+<p>To run it yourself in the terminal:</p>
+<script type="text/x-code">
+make                                   # build build/ankac
+echo 'let x@y = 5;' | ./build/ankac --tokens
+</script>
+
+<!-- ============================================================ -->
+<h2 id="play">13. Playground: watch the two rules work</h2>
+<p>Type Anka code below. For each token, the <b>"Why"</b> column shows which rules matched at that spot, how many characters each one matched, and which of the two rules (munch or priority) decided the winner.</p>
+<p style="font-size:14px;color:var(--muted)">This is a JavaScript copy of our <code>lexer.l</code>, written only for learning. It uses the same rules in the same order and was checked to print exactly the same output as <code>./build/ankac</code>. The real lexer is still the C one.</p>
+<div class="play">
+  <textarea id="src" spellcheck="false" aria-label="Anka source code">let x@y = 5;
+if ifx == 007 { a-->b; }
+for i in 0..5 { total += 1.5e3; }
+print("say \"hi\" \q");
+/* outer /* inner */ still a comment */</textarea>
+  <div class="controls">
+    <button type="button" data-ex="let x@y = 5;">x@y</button>
+    <button type="button" data-ex="if ifx iffy if_ while">keywords vs IDENT</button>
+    <button type="button" data-ex="== = <= < -> - ** * += .. .">operators</button>
+    <button type="button" data-ex="0..5 1.5..2 007 007.5 1. .5 123abc 1e10">numbers</button>
+    <button type="button" data-ex="/* never closed&#10;  /* nested */&#10;x">unclosed comment</button>
+    <label style="margin-left:auto"><input type="checkbox" id="showskip"> show skipped text</label>
+  </div>
+  <div class="tablewrap"><table class="out"><thead><tr><th>Line</th><th>Token</th><th>Lexeme</th><th>Why</th></tr></thead><tbody id="out"></tbody></table></div>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="questions">14. Questions you may get in class</h2>
+<details><summary>Why does <code>ifx</code> become one identifier and not IF + x?</summary>
+<p>Maximal munch. The identifier rule matches 3 characters and the keyword <code>if</code> only 2; the longest match wins. Priority only matters when the lengths are equal.</p></details>
+<details><summary>Why is <code>if</code> a keyword and not an identifier?</summary>
+<p>Both rules match 2 characters, a tie. On a tie, the rule written first wins, and we wrote the 16 keyword rules before the identifier rule.</p></details>
+<details><summary>How do you tell <code>=</code> from <code>==</code>?</summary>
+<p>We don't write any special code. Each has its own rule, and maximal munch takes the longer match. Flex's DFA simply keeps reading as long as a longer match is possible.</p></details>
+<details><summary>What happens with an unknown character like <code>@</code>?</summary>
+<p>The last rule, <code>.</code>, matches any single character. It reports <code>unexpected character '@'</code> with the line number, skips that one character, and lexing continues. The lexer never stops at the first error.</p></details>
+<details><summary>Can a regular expression match nested comments?</summary>
+<p>No. Nesting needs counting, and a finite automaton has finitely many states, so it can't count without limit. We use a Flex start condition (comment mode) plus a C counter, <code>comment_depth</code>.</p></details>
+<details><summary>Where do the line numbers come from?</summary>
+<p><code>%option yylineno</code>. Flex adds 1 to <code>yylineno</code> for every newline it reads, in any rule, including inside comments.</p></details>
+<details><summary>Why is <code>0..5</code> not the float <code>0.</code> followed by <code>.5</code>?</summary>
+<p>Our float rule needs digits on both sides of the dot. <code>0.</code> followed by <code>.</code> can never be a float, so the lexer reads <code>INT(0)</code>, then <code>..</code> (DOTDOT), then <code>INT(5)</code>. That was a deliberate design decision.</p></details>
+<details><summary>What is <code>lex.yy.c</code>, and do you edit it?</summary>
+<p>It's the C file Flex generates from <code>lexer.l</code>: our rules as a DFA (tables) plus the <code>yylex()</code> function that runs it. We never edit it; we change <code>lexer.l</code> and let <code>make</code> regenerate it. It lives in <code>build/</code> and isn't committed.</p></details>
+<details><summary>How does the generated code implement maximal munch?</summary>
+<p>The <code>yylex()</code> loop keeps following DFA transitions as long as it can, remembers the last accepting state it passed, and when stuck backs up to that position. Rule priority is decided when the table is built: if a state accepts for several rules, Flex stores the one listed first.</p></details>
+<details><summary>What does the linker do?</summary>
+<p><code>main.o</code> calls <code>yylex</code> but doesn't contain it; <code>lex.yy.o</code> contains it. The linker connects the two object files (and the C library) into one runnable program, <code>build/ankac</code>.</p></details>
+<details><summary>How is Flex related to Part A?</summary>
+<p>Flex takes all our regexes, builds an NFA (Thompson), converts it to a DFA (subset construction), minimizes it, and writes the DFA as tables in C. It's the same pipeline we do by hand in Part A.</p></details>
+
+<!-- ============================================================ -->
+<h2 id="status">15. What's done, what's next</h2>
+<div class="tablewrap"><table>
+<tr><th>Item</th><th>Status</th></tr>
+<tr><td>Language spec <code>docs/LANGUAGE.md</code> (v0.2)</td><td>✅ done</td></tr>
+<tr><td><code>tokens.h</code>, <code>lexer.l</code>, <code>main.c</code>, <code>Makefile</code></td><td>✅ done; builds without warnings on clang and gcc 15</td></tr>
+<tr><td>Hand-checked on hard cases and the 4 spec examples</td><td>✅ all correct, 0 errors on the examples</td></tr>
+<tr><td>Test suite: ≥3 files, ≥15 cases, expected outputs, <code>make test</code></td><td>⏭ next</td></tr>
+<tr><td>BPE comparison with tiktoken</td><td>⏳ Sat 17</td></tr>
+<tr><td>REPORT.pdf, SPEC.pdf, README, zip</td><td>⏳ Sat 17 – Sun 18</td></tr>
+<tr><td>Spec counts corrected (16 keywords, 13 multi-char operators)</td><td>✅ fixed 2026-10-15</td></tr>
+<tr><td>Bugs for the report (need 3)</td><td>1 / 3 logged</td></tr>
+</table></div>
+</main>
+</div>
+
+<!-- ===================== code blocks: plain text, shown as <pre> ===================== -->
+<script>
+document.querySelectorAll('script[type="text/x-code"]').forEach(function (s) {
+  var pre = document.createElement('pre');
+  var code = document.createElement('code');
+  code.textContent = s.textContent.replace(/^\n/, '').replace(/\s+$/, '');
+  pre.appendChild(code);
+  s.replaceWith(pre);
+});
+</script>
+
+<!-- ===================== mini lexer: a JS copy of src/lexer.l, for learning ===================== -->
+<script id="mini-lexer">
+function lexAnka(src) {
+  var esc = function (s) { return s.replace(/[.*+?^${}()|[\]\\\/]/g, '\\$&'); };
+  var lit = function (s) { return new RegExp(esc(s), 'y'); };
+  var KW = [['fn','FN'],['let','LET'],['if','IF'],['else','ELSE'],['while','WHILE'],['for','FOR'],['in','IN'],
+            ['return','RETURN'],['break','BREAK'],['continue','CONTINUE'],['print','PRINT'],['int','TYPE_INT'],
+            ['float','TYPE_FLOAT'],['bool','TYPE_BOOL'],['true','TRUE'],['false','FALSE']];
+  var OPS = [['+','PLUS'],['-','MINUS'],['*','STAR'],['/','SLASH'],['%','PERCENT'],['**','POW'],['=','ASSIGN'],
+             ['+=','PLUS_ASSIGN'],['-=','MINUS_ASSIGN'],['*=','STAR_ASSIGN'],['/=','SLASH_ASSIGN'],['==','EQ'],
+             ['!=','NEQ'],['<','LT'],['<=','LE'],['>','GT'],['>=','GE'],['&&','AND'],['||','OR'],['!','NOT'],
+             ['->','ARROW'],['..','DOTDOT'],['(','LPAREN'],[')','RPAREN'],['{','LBRACE'],['}','RBRACE'],
+             [';','SEMI'],[',','COMMA'],[':','COLON']];
+  // Same rules, same order as src/lexer.l (order = priority).
+  var INITIAL = [
+    {label: 'whitespace', re: /[ \t\r\n]+/y, kind: 'skip'},
+    {label: '// comment', re: /\/\/[^\n]*/y, kind: 'skip'},
+    {label: '/* opens comment', re: /\/\*/y, kind: 'open'}
+  ].concat(KW.map(function (k) { return {label: 'keyword "' + k[0] + '"', re: lit(k[0]), kind: 'tok', tok: k[1]}; }))
+   .concat([
+    {label: 'IDENT', re: /[a-zA-Z_][a-zA-Z0-9_]*/y, kind: 'tok', tok: 'IDENT'},
+    {label: 'FLOAT (dot)', re: /[0-9]+\.[0-9]+([eE][+-]?[0-9]+)?/y, kind: 'tok', tok: 'FLOAT_LIT'},
+    {label: 'FLOAT (exponent)', re: /[0-9]+[eE][+-]?[0-9]+/y, kind: 'tok', tok: 'FLOAT_LIT'},
+    {label: 'INT', re: /0|[1-9][0-9]*/y, kind: 'tok', tok: 'INT_LIT'},
+    {label: 'leading-zero error', re: /0[0-9]+/y, kind: 'err', msg: 'integer with leading zeros'},
+    {label: 'STRING', re: /"([^"\\\n]|\\.)*"/y, kind: 'str'},
+    {label: 'unterminated string', re: /"([^"\\\n]|\\.)*/y, kind: 'err', msg: 'unterminated string'}
+  ]).concat(OPS.map(function (o) { return {label: '"' + o[0] + '"', re: lit(o[0]), kind: 'tok', tok: o[1]}; }))
+   .concat([{label: 'catch-all .', re: /[^\n]/y, kind: 'bad'}]);
+  var COMMENT = [
+    {label: 'nested /*', re: /\/\*/y, kind: 'inc'},
+    {label: '*/', re: /\*\//y, kind: 'dec'},
+    {label: 'comment text', re: /[^\/*\n]+/y, kind: 'cskip'},
+    {label: 'newline', re: /\n/y, kind: 'cskip'},
+    {label: 'lone / or *', re: /[^\n]/y, kind: 'cskip'}
+  ];
+
+  var pos = 0, line = 1, mode = 'INITIAL', depth = 0, startLine = 0;
+  var items = [], lines = [];
+  function pad(s) { while (s.length < 12) s += ' '; return s; }
+  function error(ln, what, text) {
+    items.push({line: ln, kind: 'error', name: 'ERROR', text: text, why: what});
+    lines.push('LINE ' + ln + ': ' + pad('ERROR') + ' ' + what + " '" + text + "'");
+  }
+  function token(name, text, why) {
+    items.push({line: line, kind: 'token', name: name, text: text, why: why});
+    lines.push('LINE ' + line + ': ' + pad(name) + " '" + text + "'");
+  }
+  function explain(cands, win) {
+    if (win.rule.kind === 'bad') return 'no rule matches → the catch-all "." (last rule)';
+    var others = cands.filter(function (c) { return c !== win; });
+    if (others.length === 0) return 'only ' + win.rule.label + ' matches (' + win.len + ')';
+    var list = cands.map(function (c) { return c.rule.label + ' (' + c.len + ')'; }).join(' · ');
+    var tie = others.filter(function (c) { return c.len === win.len; });
+    if (tie.length) return list + ' → tie at ' + win.len + ', first-listed rule wins (priority)';
+    return list + ' → longest wins (maximal munch)';
+  }
+
+  while (pos < src.length) {
+    var rules = mode === 'INITIAL' ? INITIAL : COMMENT;
+    var cands = [];
+    for (var i = 0; i < rules.length; i++) {
+      rules[i].re.lastIndex = pos;
+      var m = rules[i].re.exec(src);
+      if (m && m[0].length > 0) cands.push({rule: rules[i], len: m[0].length, idx: i});
+    }
+    if (cands.length === 0) { pos++; continue; }
+    var win = cands[0];
+    cands.forEach(function (c) { if (c.len > win.len) win = c; });   // longest; ties keep the earlier rule
+    var shown = cands.filter(function (c) { return c.rule.kind !== 'bad' || c === win; });
+    var text = src.substr(pos, win.len);
+    if (win.rule.kind === 'bad') {                     // one whole character, possibly multi-byte
+      var cp = src.codePointAt(pos);
+      text = String.fromCodePoint(cp);
+    }
+    pos += text.length;
+    line += (text.match(/\n/g) || []).length;
+    var r = win.rule;
+    if (r.kind === 'tok') token(r.tok, text, explain(shown, win));
+    else if (r.kind === 'str') {
+      for (var j = 1; j < text.length; j++) {
+        if (text[j] === '\\') {
+          var c = text[j + 1];
+          if (c !== 'n' && c !== 't' && c !== '"' && c !== '\\') error(line, 'invalid escape', '\\' + c);
+          j++;
+        }
+      }
+      token('STRING_LIT', text, explain(shown, win));
+    }
+    else if (r.kind === 'err') error(line, r.msg, text);
+    else if (r.kind === 'bad') {
+      var code = text.codePointAt(0);
+      if (code >= 0x20 && code <= 0x7e) error(line, 'unexpected character', text);
+      else Array.from(new TextEncoder().encode(text)).forEach(function (b) {
+        error(line, 'unexpected byte', '\\x' + b.toString(16).toUpperCase().padStart(2, '0'));
+      });
+    }
+    else if (r.kind === 'open') { depth = 1; startLine = line; mode = 'COMMENT';
+      items.push({line: line, kind: 'skip', name: '(comment)', text: text, why: 'enter comment mode, depth 1'}); }
+    else if (r.kind === 'inc') { depth++;
+      items.push({line: line, kind: 'skip', name: '(comment)', text: text, why: 'nested: depth ' + depth}); }
+    else if (r.kind === 'dec') { depth--; if (depth === 0) mode = 'INITIAL';
+      items.push({line: line, kind: 'skip', name: '(comment)', text: text,
+                  why: depth === 0 ? 'depth 0: back to normal mode' : 'depth ' + depth}); }
+    else items.push({line: line, kind: 'skip', name: r.kind === 'skip' ? '(skipped)' : '(comment)', text: text, why: r.label});
+  }
+  if (mode === 'COMMENT') error(startLine, 'unterminated comment', '/*');
+  items.push({line: line, kind: 'token', name: 'END', text: '', why: 'end of input'});
+  lines.push('LINE ' + line + ': END');
+  return {items: items, lines: lines};
+}
+</script>
+
+<script>
+(function () {
+  var src = document.getElementById('src'), out = document.getElementById('out'), showSkip = document.getElementById('showskip');
+  function cell(tr, text, cls) { var td = document.createElement('td'); td.textContent = text; if (cls) td.className = cls; tr.appendChild(td); }
+  function render() {
+    var res = lexAnka(src.value);
+    out.textContent = '';
+    res.items.forEach(function (it) {
+      if (it.kind === 'skip' && !showSkip.checked) return;
+      var tr = document.createElement('tr'); tr.className = it.kind;
+      cell(tr, it.line);
+      cell(tr, it.name, 'name mono');
+      cell(tr, it.kind === 'error' ? it.text : JSON.stringify(it.text).slice(1, -1), 'mono');
+      cell(tr, it.why, 'why');
+      out.appendChild(tr);
+    });
+  }
+  src.addEventListener('input', render);
+  showSkip.addEventListener('change', render);
+  document.querySelectorAll('[data-ex]').forEach(function (b) {
+    b.addEventListener('click', function () { src.value = b.getAttribute('data-ex'); render(); });
+  });
+  render();
+})();
+</script>
+</body>
+</html>

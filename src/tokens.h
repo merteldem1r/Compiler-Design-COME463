@@ -10,7 +10,7 @@
 typedef enum {
     END = 0,            /* end of input */
 
-    /* keywords (15) */
+    /* keywords (16) */
     FN = 258, LET,
     IF, ELSE, WHILE, FOR, IN, RETURN, BREAK, CONTINUE,
     PRINT,
