@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Anka Language Specification</title>
+<style>
+  @page { size: A4; margin: 9mm 12mm; }
+  * { box-sizing: border-box; }
+  body { margin: 0; color: #111; background: #fff; font: 8.4pt/1.27 "Helvetica Neue", Helvetica, Arial, sans-serif; }
+  h1 { font-size: 15pt; margin: 0; }
+  .meta { color: #444; margin: 1px 0 5px; font-size: 8.4pt; }
+  .desc { margin: 0 0 5px; font-size: 9.2pt; }
+  h2 { font-size: 10pt; margin: 5px 0 2px; border-bottom: 1px solid #999; padding-bottom: 1px; }
+  table { border-collapse: collapse; width: 100%; table-layout: fixed; }
+  th, td { border: 1px solid #bbb; padding: 1.1px 4px; text-align: left; vertical-align: top; }
+  th { background: #eee; font-size: 8pt; }
+  code, pre { font-family: Menlo, "DejaVu Sans Mono", Consolas, monospace; font-size: 7.7pt; }
+  pre { margin: 0; padding: 4px 6px; background: #f5f5f5; border: 1px solid #ccc; border-radius: 3px; line-height: 1.28; }
+  .ex { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; }
+  .ex b { display: block; font-size: 8.2pt; margin-bottom: 2px; }
+  .ex pre { font-size: 6.8pt; }
+  ul { margin: 2px 0; padding-left: 16px; }
+  li { margin: 1px 0; }
+  .small { font-size: 8pt; color: #333; }
+</style>
+</head>
+<body>
+<h1>Anka: Language Specification (v0.2)</h1>
+<div class="meta">BIL 463 Compiler Design · Project 1 · Mert Eldemir (25120205086) · Path A: C + Flex · source files <code>*.anka</code></div>
+<p class="desc"><b>Anka</b> is a small, statically typed, C-like language designed to be compiled end to end in one semester; like the phoenix it is named after, its lexer reports errors and keeps going.</p>
+
+<h2>Lexical rules</h2>
+<ul>
+  <li><b>Characters:</b> ASCII. Whitespace (<code>' ' \t \r \n</code>) only separates tokens; indentation has no meaning. Lines start at 1. Non-ASCII bytes are allowed only inside comments and strings.</li>
+  <li><b>Comments:</b> <code>// …</code> to end of line; <code>/* … */</code> may span lines and <b>nest</b> (<code>/* a /* b */ c */</code> is one comment).</li>
+  <li><b>Keywords</b> are reserved and case-sensitive (<code>If</code> is an identifier). <b>Ambiguity:</b> (1) maximal munch: the longest match wins; (2) on equal length the rule listed first wins, and keywords are listed before <code>IDENT</code>.</li>
+  <li><b>Errors</b> are reported with their line number, skipped, and lexing continues (output: <code>LINE n: ERROR …</code>).</li>
+</ul>
+
+<h2>Token table (16 keywords, 22 operators of which 13 multi-character, 7 punctuation marks)</h2>
+<table>
+<tr><th style="width:10%">Category</th><th style="width:35%">Tokens</th><th style="width:40%">Regex (Flex)</th><th style="width:15%">Examples</th></tr>
+<tr><td>Keywords</td><td>FN LET IF ELSE WHILE FOR IN RETURN BREAK CONTINUE PRINT TYPE_INT TYPE_FLOAT TYPE_BOOL TRUE FALSE</td><td>the literal words <code>fn let if else while for in return break continue print int float bool true false</code></td><td><code>fn</code>, <code>while</code></td></tr>
+<tr><td>Identifier</td><td>IDENT</td><td><code>[a-zA-Z_][a-zA-Z0-9_]*</code></td><td><code>total_sum</code>, <code>_t</code>, <code>ifx</code></td></tr>
+<tr><td>Integer</td><td>INT_LIT</td><td><code>0|[1-9][0-9]*</code></td><td><code>0</code>, <code>42</code></td></tr>
+<tr><td>Float</td><td>FLOAT_LIT</td><td><code>[0-9]+\.[0-9]+([eE][+-]?[0-9]+)?</code><br><code>| [0-9]+[eE][+-]?[0-9]+</code></td><td><code>3.14</code>, <code>2.5e-3</code>, <code>1e10</code></td></tr>
+<tr><td>String</td><td>STRING_LIT</td><td><code>\"([^"\\\r\n]|\\[^\r\n])*\"</code>; legal escapes <code>\n \t \" \\</code></td><td><code>"a\tb\n"</code></td></tr>
+<tr><td>Arithmetic</td><td>PLUS MINUS STAR SLASH PERCENT POW</td><td><code>+ - * / % **</code></td><td><code>a ** 2</code></td></tr>
+<tr><td>Assignment</td><td>ASSIGN PLUS_ASSIGN MINUS_ASSIGN STAR_ASSIGN SLASH_ASSIGN</td><td><code>= += -= *= /=</code></td><td><code>x += 1</code></td></tr>
+<tr><td>Comparison</td><td>EQ NEQ LT LE GT GE</td><td><code>== != &lt; &lt;= &gt; &gt;=</code></td><td><code>i &lt;= n</code></td></tr>
+<tr><td>Logical</td><td>AND OR NOT</td><td><code>&amp;&amp; || !</code></td><td><code>!a &amp;&amp; b</code></td></tr>
+<tr><td>Arrow, range</td><td>ARROW DOTDOT</td><td><code>-&gt; \.\.</code></td><td><code>-&gt; int</code>, <code>0..10</code></td></tr>
+<tr><td>Punctuation</td><td>LPAREN RPAREN LBRACE RBRACE SEMI COMMA COLON</td><td><code>( ) { } ; , :</code></td><td><code>f(a, b);</code></td></tr>
+<tr><td>Skipped</td><td>(no token)</td><td><code>[ \t\r\n]+</code> · <code>"//"[^\n]*</code> · <code>"/*" … "*/"</code> (start condition + depth counter)</td><td></td></tr>
+<tr><td>End</td><td>END (code 0)</td><td><code>&lt;&lt;EOF&gt;&gt;</code></td><td></td></tr>
+<tr><td>Errors</td><td>reported, not returned</td><td><code>0[0-9]+</code> leading zeros (<code>007</code>; <code>007.5</code> is a valid float) · unterminated string · invalid escape (<code>\q</code>) · unterminated <code>/*</code> (reported at its opening line) · <code>.</code> any other character (last rule)</td><td><code>x@y</code> → IDENT, error <code>@</code>, IDENT</td></tr>
+</table>
+<p class="small" style="margin:3px 0 0">There are no negative literals: <code>-5</code> is <code>MINUS INT_LIT</code> (the parser handles unary minus). <code>1.</code> and <code>.5</code> are not floats: the lone <code>.</code> is an error.</p>
+
+<h2>Example programs</h2>
+<div class="ex">
+<div><b>1 · functions, recursion, <code>-&gt;</code>, <code>**</code></b><pre>fn power_sum(n: int) -&gt; int {
+    if (n == 0) { return 0; }
+    return n ** 2 + power_sum(n - 1);
+}
+fn main() -&gt; int {
+    print(power_sum(4));   // 30
+    return 0;
+}</pre></div>
+<div><b>2 · <code>for</code>/ranges, <code>break</code>/<code>continue</code>, <code>%</code>, <code>+=</code></b><pre>fn main() -&gt; int {
+    let evens: int = 0;
+    for i in 0..20 {
+        if (i % 2 != 0) { continue; }
+        if (i &gt; 10) { break; }
+        evens += 1;
+    }
+    return evens;
+}</pre></div>
+<div><b>3 · floats, <code>bool</code>, strings, nested comment</b><pre>/* Area helper. /* Comments nest. */ */
+fn circle_area(r: float) -&gt; float {
+    return 3.14159 * r ** 2;
+}
+fn main() -&gt; int {
+    let big: bool = circle_area(2.5e0) &gt;= 10.0;
+    if (!big) { print("small\n"); }
+    else { print("big\n"); }
+    return 0;
+}</pre></div>
+</div>
+
+<h2>Design decisions</h2>
+<ul style="list-style:none; padding-left:2px">
+  <li><b>1. Floats need digits on both sides of the dot.</b> Why: if <code>1.</code> were a float, maximal munch would read <code>0..5</code> as <code>FLOAT(0.)</code> followed by a stray <code>.5</code>. With this rule <code>0.</code> can never start a float, so <code>0..5</code> is <code>INT DOTDOT INT</code> with no lookahead code. Cost: <code>1.</code> and <code>.5</code> are invalid.</li>
+  <li><b>2. Block comments nest.</b> Why: programmers comment out code that already contains comments, which silently breaks in C. Matching nested pairs needs <b>counting</b>, which no regular expression or finite automaton can do, so we use a Flex start condition (<code>%x COMMENT</code>) plus a C depth counter. An unclosed comment is reported at the line where it opened.</li>
+</ul>
+</body>
+</html>

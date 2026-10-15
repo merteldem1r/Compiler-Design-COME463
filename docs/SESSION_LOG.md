@@ -4,6 +4,30 @@ Newest entry on top. One entry per working session, written by `/wrap-up`.
 
 ---
 
+## 2026-10-15/16 — Lexer, tests, BPE, SPEC + REPORT, submission zip
+
+**Done**
+- Status analysis: found the directive's "Monday, October 20" is self-contradictory (Oct 20, 2026 is a Tuesday; class is Tue 09:30). Working deadline set to **Mon 2026-10-19**.
+- Spec v0.2 with the student's decisions: floats may have leading zeros (`007.5`), `123abc` = `INT_LIT IDENT`, non-ASCII bytes reported in hex (allowed inside comments/strings), `END` = code 0, exact output format. Later fixes: counts corrected to 16 keywords / 13 multi-char operators; string regex excludes `\r`.
+- `src/tokens.h`, `src/lexer.l`, `src/main.c`, `Makefile`: builds warning-free with clang and gcc-15.
+- Tests: `tests/lexer/` 7 files, cases C1–C33, golden outputs reviewed line by line; `make test` 7/7.
+- BPE: `.venv` + tiktoken 0.14.0, `projects/project-1/solution/bpe/bpe_compare.py` → `results.md` (`make bpe`). Key numbers: 459 lexer vs 1,681 BPE tokens (610 on lexemes only); Turkish 14 tokens / 3 words vs English 4 / 4; the lecture slide's `' 4','2'` for 42 does not match any measured encoding.
+- `SPEC.pdf` (1 page), `REPORT.pdf` (2 pages), submission `README.md`; `make pdf-p1`, `make package-p1` → `dist/project1.zip`, dry-run from an empty folder: clang + gcc-15 warning-free, 7/7, BPE reproduces.
+- Study material: `docs/study/p1-part-a-guide.md` (Part A method + practice, no graded answers) and `docs/study/p1-lexer-walkthrough.html` (every file explained, build flow, live playground checked against `ankac`).
+
+**Bugs hit**
+- #1 `-Wsign-compare` warning inside Flex-generated `lex.yy.c` (Apple Flex compares signed `int` with unsigned `yy_size_t`) → compile it separately with `-Wno-sign-compare`; `main.c` keeps all warnings.
+- #2 `print("abc\` + newline gave two errors: `\\.` needs a char after `\` and `.` never matches `\n`, so the lone `\` hit the catch-all → unterminated rule ends in `\\?`. Test C32.
+- #3 `\r\n` files: the invisible `\r` leaked into the unterminated-string error and scrambled the terminal → string class `[^"\\\r\n]`, escapes `\\[^\r\n]`. Test C33 (kept CRLF by `.gitattributes`). Bugs #2/#3 tests verified to fail on the old lexer.
+- Doc bugs: spec said 15 keywords / 10 multi-char ops (really 16 / 13), caught via `YY_NUM_RULES 62`; SPEC decision 1 wording and report bug numbering corrected before packaging.
+
+**Next**
+1. Student reads and edits `projects/project-1/solution/REPORT.html` and `SPEC.html` (rewrite the 5 BPE answers in own words), then `make pdf-p1 && make package-p1`.
+2. Student finishes Part A (guide: `docs/study/p1-part-a-guide.md`), scans to one PDF; asks the professor about deadline (Mon 19 vs Tue 20) and solo work.
+3. Submit Part A PDF + `dist/project1.zip` by Mon 2026-10-19; `git tag p1-submission`; then update `ROADMAP.md` and rewrite `PLAN.md` for P2 (`brew install bison` first). Optional: Linux build check in Docker.
+
+---
+
 ## 2026-10-14 — Status check, session recovery, wrap-up hook
 
 **Done**

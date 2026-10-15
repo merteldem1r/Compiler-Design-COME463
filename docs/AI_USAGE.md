@@ -12,6 +12,7 @@ Course policy: AI use must be acknowledged in every report, with **2–3 prompts
 | 2026-10-14 | P1 | Status analysis; rebuilt the lost session log from the transcript; wrote the `SessionStart` wrap-up check hook | P-5, P-6 | No wrong output caught. Known limitation, accepted: the hook warns about *any* commit made after the last log commit, so a small typo-fix commit also triggers a "missed wrap-up" note |
 | 2026-10-15 | P1 | Built the lexer (`tokens.h`, `lexer.l`, `main.c`, `Makefile`), the Part A study guide and the lexer walkthrough page | — | Spec v0.1 (written by the AI) said **15** keywords and **10** multi-char operators; the real counts are **16** and **13**. Caught while counting the 62 rules in the generated `lex.yy.c`; fixed in `LANGUAGE.md`, `tokens.h` and the walkthrough |
 | 2026-10-15 | P1 | Wrote the lexer test suite (7 files, 33 cases) and checked every expected line against the spec | — | The AI-written string rules had two bugs, found by the AI's own edge-case tests: a lone `\` before the newline in an unterminated string gave a second, confusing error; and `\r` from Windows line endings leaked into error messages. Fixed in `lexer.l` + spec; regression tests C32, C33 fail on the old lexer |
+| 2026-10-16 | P1 | BPE script + results; drafted SPEC, REPORT (incl. the 5 BPE answers) and the submission README from the project logs; built and dry-ran the zip | P-11, P-12 | (1) The BPE script first listed lexer errors after the tokens instead of in order; fixed before use. (2) SPEC design decision 1 first claimed munch "would fail on the second dot" (wrong: it would produce `FLOAT(0.)` + `.5`); reworded. (3) The report first numbered the bugs differently from the test-file headers; renumbered to match. Note: the lecture slide's `' 4','2'` split for `42` did not match any measured tokenizer; reported as measured |
 
 ## Prompts (verbatim)
 
@@ -32,3 +33,21 @@ Course policy: AI use must be acknowledged in every report, with **2–3 prompts
 
 **P-6 (2026-10-14):**
 > besides that how the skill currently works, on the previous sessoin I've just ended the session via exit command but no session or AI usage are actually written, is that normal, is there is hook that should make that
+
+**P-7 (2026-10-15):**
+> analyze the current stage of the project, where we are, and what is the next step to going to finisht the project 1, which deadline is close right now, let's analyze
+
+**P-8 (2026-10-15):**
+> 1. your reccomendation 2. yes leave it, 3. yes suggestions works, also before goind to the next step could you please explain me in human understandable way what is the part A, what I should do, how to complete that, what I need to know, if there is anything that you can help me with that please let me know, also you can create some kind of document about the part A, to make me understand the work and how to solve that, so while you gonna make the other parts, I'm gonna work on that personal part with my own
+
+**P-9 (2026-10-15):**
+> before that I want from you the complete in human way understandable explanations about what you have done on each file, what is the purpose, what is the code that you've written serve for, imagine that I'm someone who is new at the compiler design so I want to truly understand what was done
+
+**P-10 (2026-10-15):**
+> yes, start the test suite with the 6-file plan
+
+**P-11 (2026-10-15):**
+> start with the bpe comparison, let's move forward
+
+**P-12 (2026-10-16):**
+> go with all the steps, let's complete the project1

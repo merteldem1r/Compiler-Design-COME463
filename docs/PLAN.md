@@ -24,10 +24,10 @@ Part A study guide: `docs/study/p1-part-a-guide.md`.
 | Day | Part B (together) | Part A (you, ~1.5 h/day) |
 |---|---|---|
 | Wed 14 | Repo setup ✅ · language designed ✅ (`docs/LANGUAGE.md` v0.1) | (slipped) |
-| Thu 15 | Spec review ✅ (v0.2) · write `src/lexer.l` + driver · Makefile | A1 regexes |
-| Fri 16 | Tests (≥3 files, ≥15 cases) + expected outputs · fix bugs (**log them for the report**) | A2 automata + A3 Thompson |
-| Sat 17 | BPE comparison with tiktoken · draft REPORT.md + SPEC | A4 subset + minimization |
-| Sun 18 | Export SPEC.pdf + REPORT.pdf · build zip · dry-run from a clean clone | A5 + scan to PDF |
+| Thu 15 | Spec review ✅ (v0.2) · lexer + driver + Makefile ✅ · tests ✅ (pulled forward) | A1 regexes |
+| Fri 16 | BPE ✅ · SPEC.pdf + REPORT.pdf drafted ✅ · zip built + dry-run ✅ (all pulled forward) | A2 automata + A3 Thompson |
+| Sat 17 | **Student reviews/edits REPORT + SPEC** (`make pdf-p1 && make package-p1`) · optional Linux check | A4 subset + minimization |
+| Sun 18 | Buffer | A5 + scan to PDF |
 | Mon 19 | **Submit** (working deadline) · `git tag p1-submission` | — |
 | Tue 20 | Buffer only if the professor confirms Tue 09:30 | — |
 
@@ -44,18 +44,21 @@ Part A study guide: `docs/study/p1-part-a-guide.md`.
   - [x] `123abc` stays `INT_LIT IDENT` (parser rejects it in P2); covered by a test
   - [x] Confirmed: `print` keyword, `007` error, no negative literals, `1.`/`.5` invalid, ASCII only (non-ASCII bytes reported in hex)
 - [x] `src/lexer.l`, `src/tokens.h`, `src/main.c`, `Makefile` (`make`, `make test`) — builds warning-free with clang and gcc-15 (2026-10-15)
-- [ ] `make package-p1`
+- [x] `make package-p1` → `dist/project1.zip`; unzipped in an empty folder: builds warning-free (clang, gcc-15), 7/7 tests, BPE reproduces (2026-10-16)
 - [x] Lexer handles: maximal munch, keyword priority, line numbers, errors (report line, skip, continue), multi-char operators, both comment kinds, unterminated `/*` at EOF
 - [x] Tests: `tests/lexer/` 7 files, 33 cases C1–C33 (valid programs, edge cases, error cases) with `tests/lexer/expected/`; `make test` 7/7 pass (2026-10-15)
 - [x] Log every real bug we hit (the report needs **3 bugs**: what failed, why, how it was fixed). 3 logged below
 
 ### Part B: BPE comparison and report
-- [ ] `.venv` + `pip install tiktoken`; script in `projects/project-1/solution/bpe/`
-- [ ] Answer the 5 BPE questions (token counts, `42`, `@`, parser vs neural net, the Turkish sentence)
-- [ ] `REPORT.md` → `REPORT.pdf` (2 pages: design / testing and bugs / AI usage + BPE). Must cover the input `ifx`
-- [ ] `SPEC.md` → `SPEC.pdf` (1 page)
-- [ ] Submission `README.md`: author, path, build instructions, AI tools used
-- [ ] Zip layout: `project1/{README.md, SPEC.pdf, src/, tests/, output/, REPORT.pdf}`
+- [x] `.venv` + tiktoken 0.14.0; `bpe_compare.py` → `results.md`; `make bpe` regenerates it (2026-10-16)
+- [x] Answer the 5 BPE questions (token counts, `42`, `@`, parser vs neural net, the Turkish sentence): AI draft in REPORT §3, **student to review/rewrite**
+- [x] `REPORT.html` → `REPORT.pdf` (2 pages: design / testing and bugs / AI usage + BPE, covers `ifx`), `make pdf-p1`. **Student must read and edit before submitting**
+- [x] `SPEC.html` → `SPEC.pdf` (1 page)
+- [x] Submission `README.md`: author, path, build instructions, AI tools used
+- [x] Zip layout: `project1/{README.md, SPEC.pdf, src/, tests/, output/, REPORT.pdf}` (+ `Makefile`, `bpe/`)
+- [ ] Optional: Linux build check in Docker (needs Docker Desktop running)
+- [ ] **Student: read and edit REPORT.html / SPEC.html** (BPE answers in own words), then `make pdf-p1 && make package-p1`
+- [ ] Submit Part A PDF + `dist/project1.zip` on Classroom · `git tag p1-submission` · then update ROADMAP and rewrite this PLAN for P2
 
 ### Part A (handwritten, individual)
 - [ ] A1 regexes (15) · [ ] A2 automata (15) · [ ] A3 Thompson (10) · [ ] A4 subset + minimization (15) · [ ] A5 short answers (5)
@@ -86,5 +89,9 @@ Part A study guide: `docs/study/p1-part-a-guide.md`.
 | 2026-10-14 | Language **Anka** (`.anka`): C-like, `x: int` annotations, braces + `;`, `->` `..` `**`, compound assignment, `%`, `break`/`continue`, `for i in a..b` | Chosen together via Q&A. Each feature is cheap in P2–P4; see `docs/LANGUAGE.md` §6 |
 | 2026-10-14 | Strings only as `print` arguments; comments nest | Full lexer edge cases without string memory management in P4; nesting is a strong "beyond regular" report point |
 | 2026-10-15 | Floats may have leading zeros; `123abc` is `INT_LIT IDENT`; non-ASCII bytes reported in hex (spec v0.2) | Python 3 precedent: the int ban exists because C reads `007` as octal, floats never had that meaning. `123abc` is a syntax problem the parser catches, so the lexer stays simple |
+| 2026-10-15 | Tests: 7 files, numbered cases C1–C33; expected outputs checked line by line, not just generated | A golden file only proves something if a human checked it; numbered cases let the report cite exact tests |
+| 2026-10-16 | SPEC and REPORT written as HTML and printed to PDF by headless Chrome (`make pdf-p1`) | No pandoc on this Mac; HTML gives exact control to fit the 1- and 2-page limits |
+| 2026-10-16 | Zip also contains `Makefile` and `bpe/`; folder paths are Makefile variables (`TEST_DIR`, `EXPECTED_DIR`, `BPE_DIR`) | The assignment's layout (`tests/` + `output/`) differs from the repo's; one Makefile serves both, so the grader can `make test` |
+| 2026-10-16 | BPE table adds a "lexemes only" column | Separates "BPE also counts comments/whitespace" from "BPE cuts differently" (1,681 vs 610 vs 459 tokens) |
 | 2026-10-15 | Working deadline Mon 2026-10-19 | The directive's "Monday, October 20" is self-contradictory (Oct 20 is a Tuesday, the class day). Aim for the earlier date until confirmed |
 | 2026-10-14 | Close every session with `/wrap-up` → student runs the git block → `/exit`; a `SessionStart` hook flags sessions that skipped it | A session ended with `/exit` and its log was lost. Hooks run shell commands, not the agent, so they can only *detect* a missed wrap-up, not write it |
