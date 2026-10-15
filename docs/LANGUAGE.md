@@ -33,7 +33,7 @@ fn main() -> int {
 ## 2. Lexical structure (Project 1)
 
 ### 2.1 Character set and whitespace
-- Source files are ASCII. Any other byte is a lexical error.
+- Source files are ASCII. Outside comments and string literals, any other byte is a lexical error. Inside a comment or a string any byte is allowed, so `// açıklama` is fine.
 - Whitespace (`' '`, `\t`, `\r`, `\n`) separates tokens and is otherwise ignored. Indentation has **no meaning**.
 - Each `\n` increments the line counter. Lines start at 1.
 
@@ -72,7 +72,7 @@ Keywords are case-sensitive: `If` and `WHILE` are ordinary identifiers.
 | Arrow | `ARROW` | `->` | `fn f() -> int` |
 | Range | `DOTDOT` | `\.\.` | `0..10` |
 | Punctuation | `LPAREN` `RPAREN` `LBRACE` `RBRACE` `SEMI` `COMMA` `COLON` | `(` `)` `{` `}` `;` `,` `:` | `f(a, b);` |
-| End of input | `END` | `<<EOF>>` | |
+| End of input | `END` (code 0, as Bison expects) | `<<EOF>>` | |
 
 That is 22 operators (10 of them multi-character) and 7 punctuation marks.
 
@@ -113,11 +113,12 @@ The lexer **reports, skips, and continues**. It never stops at the first error.
 | `/* a /* b */ c */` | *(nothing)* | Nesting depth goes 1 → 2 → 1 → 0 |
 
 ### 2.8 Output format (`ankac --tokens`)
-One token per line, errors inline, all on standard output:
+One token per line, errors inline, all on standard output. The token name is padded to 12 characters. The exit status is 1 if there was any lexical error, otherwise 0.
 ```
-LINE 1: FN          'fn'
-LINE 1: IDENT       'fact'
-LINE 3: ERROR       unexpected character '@'
+LINE 1: FN           'fn'
+LINE 1: IDENT        'fact'
+LINE 3: ERROR        unexpected character '@'
+LINE 4: ERROR        unexpected byte '\xC4'
 LINE 9: END
 ```
 

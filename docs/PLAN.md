@@ -43,10 +43,11 @@ Part A study guide: `docs/study/p1-part-a-guide.md`.
   - [x] Leading zeros in floats: **allowed** (`007.5` is a float), like Python 3
   - [x] `123abc` stays `INT_LIT IDENT` (parser rejects it in P2); covered by a test
   - [x] Confirmed: `print` keyword, `007` error, no negative literals, `1.`/`.5` invalid, ASCII only (non-ASCII bytes reported in hex)
-- [ ] `src/lexer.l`, `src/tokens.h`, `src/main.c`, `Makefile` (`make`, `make test`, `make package-p1`)
-- [ ] Lexer handles: maximal munch, keyword priority, line numbers, errors (report line, skip, continue), multi-char operators, both comment kinds, unterminated `/*` at EOF
+- [x] `src/lexer.l`, `src/tokens.h`, `src/main.c`, `Makefile` (`make`, `make test`) — builds warning-free with clang and gcc-15 (2026-10-15)
+- [ ] `make package-p1`
+- [x] Lexer handles: maximal munch, keyword priority, line numbers, errors (report line, skip, continue), multi-char operators, both comment kinds, unterminated `/*` at EOF
 - [ ] Tests: `tests/lexer/` ≥3 files and ≥15 distinct cases (valid programs, edge cases, error cases) with `tests/lexer/expected/`
-- [ ] Log every real bug we hit (the report needs **3 bugs**: what failed, why, how it was fixed)
+- [ ] Log every real bug we hit (the report needs **3 bugs**: what failed, why, how it was fixed). Running list below
 
 ### Part B: BPE comparison and report
 - [ ] `.venv` + `pip install tiktoken`; script in `projects/project-1/solution/bpe/`
@@ -59,6 +60,12 @@ Part A study guide: `docs/study/p1-part-a-guide.md`.
 ### Part A (handwritten, individual)
 - [ ] A1 regexes (15) · [ ] A2 automata (15) · [ ] A3 Thompson (10) · [ ] A4 subset + minimization (15) · [ ] A5 short answers (5)
 - [ ] Scan everything to one PDF with name and student ID on every page
+
+## Bugs log (raw material for REPORT §2)
+
+| Date | What failed | Why | Fix |
+|---|---|---|---|
+| 2026-10-15 | `make` printed a `-Wsign-compare` warning in `build/lex.yy.c` | Apple's Flex 2.6.4 generates code comparing a signed `int` with an unsigned `yy_size_t`; our `-Wextra` catches it. Not our code, so we can't fix the line | Compile the generated file separately with `-Wno-sign-compare`; `main.c` keeps all warnings |
 
 ## Open questions
 - [ ] **Ask the professor on Classroom (one message):** (1) is the deadline Mon Oct 19 or Tue Oct 20 before class? (2) is working solo OK? (the assignment says groups of 2–3; the FAQ says 2 is fine)
