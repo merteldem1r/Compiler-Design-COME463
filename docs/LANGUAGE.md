@@ -64,7 +64,7 @@ Keywords are case-sensitive: `If` and `WHILE` are ordinary identifiers.
 | Identifier | `IDENT` | `[a-zA-Z_][a-zA-Z0-9_]*` | `x`, `total_sum`, `_tmp`, `ifx` |
 | Integer literal | `INT_LIT` | `0\|[1-9][0-9]*` | `0`, `42`, `1000` |
 | Float literal | `FLOAT_LIT` | `[0-9]+\.[0-9]+([eE][+-]?[0-9]+)?\|[0-9]+[eE][+-]?[0-9]+` | `3.14`, `0.5`, `2.5e-3`, `1e10` |
-| String literal | `STRING_LIT` | `\"([^"\\\n]\|\\.)*\"` | `"hi"`, `"a\tb\n"`, `"say \"hi\""` |
+| String literal | `STRING_LIT` | `\"([^"\\\r\n]\|\\[^\r\n])*\"` | `"hi"`, `"a\tb\n"`, `"say \"hi\""` |
 | Arithmetic | `PLUS` `MINUS` `STAR` `SLASH` `PERCENT` `POW` | `+` `-` `*` `/` `%` `**` | `a ** 2` |
 | Assignment | `ASSIGN` `PLUS_ASSIGN` `MINUS_ASSIGN` `STAR_ASSIGN` `SLASH_ASSIGN` | `=` `+=` `-=` `*=` `/=` | `x += 1` |
 | Comparison | `EQ` `NEQ` `LT` `LE` `GT` `GE` | `==` `!=` `<` `<=` `>` `>=` | `i <= n` |
@@ -78,7 +78,7 @@ That is 22 operators (13 of them multi-character) and 7 punctuation marks.
 
 Notes:
 - **No negative literals.** `-5` is `MINUS INT_LIT(5)`. The sign belongs to the parser (unary minus), not the lexer.
-- String escapes allowed: `\n` `\t` `\"` `\\`. Strings cannot span lines. Strings may only appear as the argument of `print` (checked in P3).
+- String escapes allowed: `\n` `\t` `\"` `\\`. Strings cannot span lines: a raw `\r` or `\n` ends them, so Windows `\r\n` line endings behave like `\n`. Strings may only appear as the argument of `print` (checked in P3).
 - Floats need digits on **both** sides of `.`: `1.` and `.5` are not floats (see §2.6).
 - Leading zeros **are allowed in floats**: `007.5` is `FLOAT_LIT(007.5)`, while `007` is an error. Python 3 does the same. The ban on integer leading zeros exists because C reads `007` as *octal*; floats never had an octal meaning, so there is nothing to confuse.
 
@@ -95,7 +95,7 @@ The lexer **reports, skips, and continues**. It never stops at the first error.
 |---|---|---|
 | Unknown character | `let x@y = 5;` | Report `'@'`, skip 1 char → `LET IDENT(x) IDENT(y) ASSIGN INT_LIT(5) SEMI` |
 | Integer with leading zeros | `007` | Report the whole lexeme as one error (rule `0[0-9]+`) |
-| Unterminated string | `"hello` + newline | Report at that line, resume on the next line |
+| Unterminated string | `"hello` + newline | Report at that line, resume on the next line. A `\` right before the newline belongs to the error (one error, not two) |
 | Invalid escape | `"a\qb"` | Report `\q`; the string token is still produced |
 | Unterminated comment | `/* ...` EOF | Report at the line where the comment opened |
 | Lone `.` | `1.` / `.5` | `.` alone is not a token, so report `'.'` (`1.` → `INT_LIT(1)` + error) |

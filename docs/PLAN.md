@@ -46,8 +46,8 @@ Part A study guide: `docs/study/p1-part-a-guide.md`.
 - [x] `src/lexer.l`, `src/tokens.h`, `src/main.c`, `Makefile` (`make`, `make test`) — builds warning-free with clang and gcc-15 (2026-10-15)
 - [ ] `make package-p1`
 - [x] Lexer handles: maximal munch, keyword priority, line numbers, errors (report line, skip, continue), multi-char operators, both comment kinds, unterminated `/*` at EOF
-- [ ] Tests: `tests/lexer/` ≥3 files and ≥15 distinct cases (valid programs, edge cases, error cases) with `tests/lexer/expected/`
-- [ ] Log every real bug we hit (the report needs **3 bugs**: what failed, why, how it was fixed). Running list below
+- [x] Tests: `tests/lexer/` 7 files, 33 cases C1–C33 (valid programs, edge cases, error cases) with `tests/lexer/expected/`; `make test` 7/7 pass (2026-10-15)
+- [x] Log every real bug we hit (the report needs **3 bugs**: what failed, why, how it was fixed). 3 logged below
 
 ### Part B: BPE comparison and report
 - [ ] `.venv` + `pip install tiktoken`; script in `projects/project-1/solution/bpe/`
@@ -65,7 +65,9 @@ Part A study guide: `docs/study/p1-part-a-guide.md`.
 
 | Date | What failed | Why | Fix |
 |---|---|---|---|
-| 2026-10-15 | `make` printed a `-Wsign-compare` warning in `build/lex.yy.c` | Apple's Flex 2.6.4 generates code comparing a signed `int` with an unsigned `yy_size_t`; our `-Wextra` catches it. Not our code, so we can't fix the line | Compile the generated file separately with `-Wno-sign-compare`; `main.c` keeps all warnings |
+| 2026-10-15 | **#2** `print("abc\` + newline gave two errors: "unterminated string" and "unexpected character '\\'" | The escape part `\\.` needs a character after `\`, and `.` never matches `\n`, so the regex stopped before the lone `\` and the catch-all reported it | Unterminated rule ends with `\\?` (optional lone backslash). Test: `strings_comments.anka` C32 |
+| 2026-10-15 | **#3** In a Windows (`\r\n`) file, an unterminated string's error text contained an invisible `\r` that scrambled the terminal output | `[^"\\\n]` excluded `\n` but not `\r` | Exclude `\r` too: `[^"\\\r\n]` and escapes `\\[^\r\n]`. Test: `crlf_line_endings.anka` C33 (kept as CRLF by `.gitattributes`) |
+| 2026-10-15 | **#1** `make` printed a `-Wsign-compare` warning in `build/lex.yy.c` | Apple's Flex 2.6.4 generates code comparing a signed `int` with an unsigned `yy_size_t`; our `-Wextra` catches it. Not our code, so we can't fix the line | Compile the generated file separately with `-Wno-sign-compare`; `main.c` keeps all warnings |
 
 ## Open questions
 - [ ] **Ask the professor on Classroom (one message):** (1) is the deadline Mon Oct 19 or Tue Oct 20 before class? (2) is working solo OK? (the assignment says groups of 2–3; the FAQ says 2 is fine)

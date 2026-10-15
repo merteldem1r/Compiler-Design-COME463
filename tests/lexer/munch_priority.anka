@@ -1,0 +1,21 @@
+// munch_priority.anka: maximal munch (longest match wins) and
+// rule priority (on a tie in length, the rule listed first wins).
+// C4   keyword vs identifier: if -> IF (tie, priority); ifx iffy if_ _if -> IDENT (munch)
+// C5   keywords are case-sensitive: If WHILE True Print -> IDENT
+// C6   all 16 keywords, each one token
+// C7   every one-char / two-char operator pair, plus % and ..
+// C8   && and || are tokens; a single & or | is an error
+// C9   a-->b  -> IDENT MINUS ARROW IDENT
+// C10  x**-2  -> IDENT POW MINUS INT_LIT;  x**=2 -> IDENT POW ASSIGN INT_LIT (no **= operator)
+// C11  no spaces at all: munch still splits correctly
+// C12  all 7 punctuation marks
+
+if ifx iffy if_ _if
+If WHILE True Print
+fn let if else while for in return break continue print int float bool true false
+= == ! != < <= > >= + += - -= -> * *= ** / /= % ..
+a && b || c & d | e
+a-->b
+x**-2 x**=2
+x=y==z<=w&&!v
+( ) { } ; , :

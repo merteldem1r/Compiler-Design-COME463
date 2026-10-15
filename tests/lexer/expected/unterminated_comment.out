@@ -1,0 +1,9 @@
+LINE 4: LET          'let'
+LINE 4: IDENT        'ok'
+LINE 4: COLON        ':'
+LINE 4: TYPE_INT     'int'
+LINE 4: ASSIGN       '='
+LINE 4: INT_LIT      '1'
+LINE 4: SEMI         ';'
+LINE 5: ERROR        unterminated comment '/*'
+LINE 9: END

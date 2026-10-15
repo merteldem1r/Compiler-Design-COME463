@@ -1,0 +1,16 @@
+// numbers.anka: integer and float literals, and where they stop.
+// C13  integers: 0 42 1000
+// C14  floats: 3.14 0.5 2.5e-3 1e10 6E+2 2.5E0
+// C15  ranges: 0..5 -> INT DOTDOT INT;  1.5..2 -> FLOAT DOTDOT INT;  1...5 -> INT DOTDOT ERROR INT
+// C16  leading zeros: 007 and 00 are errors; 007.5 is a FLOAT (allowed, spec §2.4)
+// C17  lone dot: 1. -> INT + ERROR '.';  .5 -> ERROR '.' + INT
+// C18  number then letters: 123abc -> INT IDENT;  0x1F -> INT IDENT;  1e -> INT IDENT
+// C19  no negative literals: -5 -> MINUS INT;  -2.5 -> MINUS FLOAT
+
+0 42 1000
+3.14 0.5 2.5e-3 1e10 6E+2 2.5E0
+0..5 1.5..2 1...5
+007 00 007.5
+1. .5
+123abc 0x1F 1e
+-5 -2.5

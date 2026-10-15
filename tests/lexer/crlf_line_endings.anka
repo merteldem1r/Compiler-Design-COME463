@@ -1,0 +1,7 @@
+// crlf_line_endings.anka: this file has Windows line endings (\r\n). Keep them:
+// .gitattributes marks it -text so git never converts it.
+// C33  \r\n is one line end; an unterminated string's error has no hidden \r (bug #3)
+let a: int = 1;
+print("open
+let b: int = 2; // line comment
+print("ok\n");

@@ -1,0 +1,11 @@
+// errors.anka: report, skip, continue. The lexer never stops at the first error.
+// C27  unknown ASCII characters: @ # $ ` ~ ? \ are each reported once and skipped
+// C28  several errors on one line; the tokens between them are still produced
+// C29  non-ASCII outside comments/strings: one ERROR per byte, shown in hex
+// C30  errors at the very start and end of a line; line numbers stay correct
+
+let x@y = 5;
+#define $ `tick` ~ ? \
+@@ let a = 1 @
+let ğ = 2;
+café = 3;

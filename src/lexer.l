@@ -99,11 +99,12 @@ EXPONENT    [eE][+-]?{DIGIT}+
     /* "007": longer than INT's "0", so munch picks this error rule. */
 0{DIGIT}+                       { lex_error(yylineno, "integer with leading zeros", yytext); }
 
-    /* ---- strings: no newline inside; \\. accepts any escape, checked in C ---- */
-\"([^"\\\n]|\\.)*\"             { check_escapes(yytext, yylineno);
+    /* ---- strings: no \r or \n inside (so \r\n files work); \\[^\r\n] accepts any escape, checked in C ---- */
+\"([^"\\\r\n]|\\[^\r\n])*\"       { check_escapes(yytext, yylineno);
                                   return STRING_LIT; }
-    /* Same without the closing quote: stops before the \n, so the next line lexes normally. */
-\"([^"\\\n]|\\.)*               { lex_error(yylineno, "unterminated string", yytext); }
+    /* Same without the closing quote: stops before the line end, so the next line lexes normally.
+       The optional \\? takes a lone '\' right before the line end, so it is not a second error. */
+\"([^"\\\r\n]|\\[^\r\n])*\\?      { lex_error(yylineno, "unterminated string", yytext); }
 
     /* ---- operators: munch makes "==" one EQ, never two ASSIGNs ---- */
 "+"                     { return PLUS; }

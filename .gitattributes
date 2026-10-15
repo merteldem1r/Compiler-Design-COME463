@@ -1,0 +1,2 @@
+# Keep this test file byte-for-byte: it must keep its Windows (\r\n) line endings.
+tests/lexer/crlf_line_endings.anka -text

@@ -448,20 +448,26 @@ EXPONENT    [eE][+-]?{DIGIT}+
 
 <h3>8.9 Strings</h3>
 <script type="text/x-code">
-\"([^"\\\n]|\\.)*\"             { check_escapes(yytext, yylineno);
+\"([^"\\\r\n]|\\[^\r\n])*\"       { check_escapes(yytext, yylineno);
                                   return STRING_LIT; }
-\"([^"\\\n]|\\.)*               { lex_error(yylineno, "unterminated string", yytext); }
+\"([^"\\\r\n]|\\[^\r\n])*\\?      { lex_error(yylineno, "unterminated string", yytext); }
 </script>
 <p>Read the first pattern piece by piece:</p>
 <ol>
   <li><code>\"</code> an opening quote,</li>
   <li><code>( … )*</code> then zero or more of:
-    <ul><li><code>[^"\\\n]</code> a normal character (not a quote, not a backslash, not a newline), <b>or</b></li>
-        <li><code>\\.</code> a backslash followed by any character (an <i>escape</i>, like <code>\n</code> or <code>\"</code>),</li></ul></li>
+    <ul><li><code>[^"\\\r\n]</code> a normal character (not a quote, not a backslash, not a line end), <b>or</b></li>
+        <li><code>\\[^\r\n]</code> a backslash followed by any character except a line end (an <i>escape</i>, like <code>\n</code> or <code>\"</code>),</li></ul></li>
   <li><code>\"</code> a closing quote.</li>
 </ol>
 <p>That's why <code>"say \"hi\""</code> stays one string: <code>\"</code> is read as an escape, so it doesn't close the string.</p>
-<div class="box idea"><p><b>The second rule is the same without the closing quote.</b> If the string is closed properly, rule 1 matches one character more (the <code>"</code>), so <b>munch</b> picks it. If the line ends before any closing quote, only rule 2 can match, and we report "unterminated string". Munch alone decides; there is no <code>if</code> anywhere. The newline isn't consumed, so the next line is read normally.</p></div>
+<div class="box idea"><p><b>The second rule is the same without the closing quote.</b> If the string is closed properly, rule 1 matches one character more (the <code>"</code>), so <b>munch</b> picks it. If the line ends before any closing quote, only rule 2 can match, and we report "unterminated string". Munch alone decides; there is no <code>if</code> anywhere. The line end isn't consumed, so the next line is read normally.</p></div>
+<div class="box warn"><p><b>Two bugs our tests found here (bugs #2 and #3 for the report).</b></p>
+<ul>
+<li><b>#2:</b> <code>print("abc\</code> followed by a newline gave <b>two</b> errors: "unterminated string" <i>and</i> "unexpected character <code>'\'</code>". The escape part needs a character after the backslash, and a newline doesn't count, so the lone <code>\</code> was left over for the catch-all rule. <b>Fix:</b> the unterminated rule ends with <code>\\?</code>, an optional lone backslash, so it is part of the one error.</li>
+<li><b>#3:</b> Windows files end lines with <code>\r\n</code>. The old pattern excluded <code>\n</code> but not <code>\r</code>, so the invisible <code>\r</code> ended up inside the error text and scrambled the message in the terminal. <b>Fix:</b> exclude <code>\r</code> too (<code>[^"\\\r\n]</code>); the <code>\r</code> is then skipped as whitespace.</li>
+</ul>
+<p>Each fix has a test that fails on the old lexer: <code>strings_comments.anka</code> case C32 and <code>crlf_line_endings.anka</code> case C33.</p></div>
 <p><b>Checking escapes in C.</b> The pattern accepts <i>any</i> backslash pair, but Anka only allows <code>\n</code> <code>\t</code> <code>\"</code> <code>\\</code>. Writing that restriction into the regex would make it much harder to read, so a tiny C function walks through the matched text instead:</p>
 <script type="text/x-code">
 static void check_escapes(const char *s, int line)
@@ -860,11 +866,11 @@ print("say \"hi\" \q");
 <tr><td>Language spec <code>docs/LANGUAGE.md</code> (v0.2)</td><td>✅ done</td></tr>
 <tr><td><code>tokens.h</code>, <code>lexer.l</code>, <code>main.c</code>, <code>Makefile</code></td><td>✅ done; builds without warnings on clang and gcc 15</td></tr>
 <tr><td>Hand-checked on hard cases and the 4 spec examples</td><td>✅ all correct, 0 errors on the examples</td></tr>
-<tr><td>Test suite: ≥3 files, ≥15 cases, expected outputs, <code>make test</code></td><td>⏭ next</td></tr>
+<tr><td>Test suite: 7 files, 33 cases (C1–C33), expected outputs, <code>make test</code></td><td>✅ 7/7 pass</td></tr>
 <tr><td>BPE comparison with tiktoken</td><td>⏳ Sat 17</td></tr>
 <tr><td>REPORT.pdf, SPEC.pdf, README, zip</td><td>⏳ Sat 17 – Sun 18</td></tr>
 <tr><td>Spec counts corrected (16 keywords, 13 multi-char operators)</td><td>✅ fixed 2026-10-15</td></tr>
-<tr><td>Bugs for the report (need 3)</td><td>1 / 3 logged</td></tr>
+<tr><td>Bugs for the report (need 3)</td><td>✅ 3 / 3 logged (build warning, trailing backslash, Windows line endings)</td></tr>
 </table></div>
 </main>
 </div>
@@ -905,8 +911,8 @@ function lexAnka(src) {
     {label: 'FLOAT (exponent)', re: /[0-9]+[eE][+-]?[0-9]+/y, kind: 'tok', tok: 'FLOAT_LIT'},
     {label: 'INT', re: /0|[1-9][0-9]*/y, kind: 'tok', tok: 'INT_LIT'},
     {label: 'leading-zero error', re: /0[0-9]+/y, kind: 'err', msg: 'integer with leading zeros'},
-    {label: 'STRING', re: /"([^"\\\n]|\\.)*"/y, kind: 'str'},
-    {label: 'unterminated string', re: /"([^"\\\n]|\\.)*/y, kind: 'err', msg: 'unterminated string'}
+    {label: 'STRING', re: /"([^"\\\r\n]|\\[^\r\n])*"/y, kind: 'str'},
+    {label: 'unterminated string', re: /"([^"\\\r\n]|\\[^\r\n])*\\?/y, kind: 'err', msg: 'unterminated string'}
   ]).concat(OPS.map(function (o) { return {label: '"' + o[0] + '"', re: lit(o[0]), kind: 'tok', tok: o[1]}; }))
    .concat([{label: 'catch-all .', re: /[^\n]/y, kind: 'bad'}]);
   var COMMENT = [

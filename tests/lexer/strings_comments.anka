@@ -1,0 +1,25 @@
+// strings_comments.anka: string literals and both kinds of comments.
+// C20  legal escapes \t \n \" \\ and the empty string
+// C21  invalid escape "a\qb": one ERROR, and the STRING_LIT is still produced
+// C22  unterminated string: ERROR swallows the rest of the line; the next line lexes normally
+// C23  line comment after code, containing keywords, /* and */ (all ignored)
+// C24  nested multi-line block comment; line numbers after it stay correct
+// C25  a // inside a block comment does not hide the closing */
+// C26  non-ASCII is allowed inside comments and strings: Türkçe açıklama, "ğüş"
+// C32  unterminated string ending in a backslash: exactly ONE error, next line fine (bug #2)
+
+print("hi"); print("tab\there"); print("line\n");
+print("say \"hi\""); print("back\\slash"); print("");
+print("a\qb");
+print("never closed);
+let after: int = 1;
+let x: int = 2; // trailing comment with if, while, /* and */ inside
+/* outer
+   /* inner, line 2 of the comment */
+   still a comment: let y = 3;
+*/
+let z: int = 4; /* // this does not hide the end */ let w: int = 5;
+// Türkçe açıklama: ğüşıöç
+print("ğüş");
+print("ends with a backslash\
+print("next line is fine");

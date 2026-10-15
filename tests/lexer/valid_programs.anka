@@ -1,0 +1,45 @@
+// valid_programs.anka: the three example programs from docs/LANGUAGE.md §3.
+// Valid code only, so the expected output contains no ERROR line.
+// C1  functions, recursion, -> and **                      (lines 7-17)
+// C2  for/while loops, break/continue, +=, /=, %, &&      (lines 20-30)
+// C3  floats, bool, strings with \n, nested comment        (lines 33-45)
+
+/* ---- Example 1 ---- */
+fn power_sum(n: int) -> int {
+    if (n == 0) { return 0; }
+    return n ** 2 + power_sum(n - 1);
+}
+
+fn main() -> int {
+    let total: int = power_sum(4);   // 1 + 4 + 9 + 16
+    print("total = ");
+    print(total);
+    return 0;
+}
+
+/* ---- Example 2 ---- */
+fn main() -> int {
+    let evens: int = 0;
+    for i in 0..20 {
+        if (i % 2 != 0) { continue; }
+        if (i > 10) { break; }
+        evens += 1;
+    }
+    let n: int = 27;
+    while (n != 1 && n > 0) { if (n % 2 == 0) { n /= 2; } else { n = 3 * n + 1; } }
+    return evens;
+}
+
+/* ---- Example 3 ---- */
+/* Area helper
+   /* TODO: support more shapes */
+*/
+fn circle_area(r: float) -> float {
+    return 3.14159 * r ** 2;
+}
+
+fn main() -> int {
+    let big: bool = circle_area(2.5e0) >= 10.0;
+    if (!big) { print("small\n"); } else { print("big\n"); }
+    return 0;
+}

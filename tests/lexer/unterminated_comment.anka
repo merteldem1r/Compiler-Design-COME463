@@ -1,0 +1,8 @@
+// unterminated_comment.anka: a /* that is never closed.
+// C31  reported at the line where the comment OPENED (line 5), not at end of file;
+//      the nested */ only closes the inner comment, so everything after is swallowed
+let ok: int = 1;
+/* this comment never ends
+   /* a nested one closes */
+   but the outer one does not
+let lost: int = 2;
