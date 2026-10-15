@@ -9,7 +9,7 @@
 #include "tokens.h"
 
 /* Defined in the Flex-generated lexer (lexer.l). */
-extern FILE *yyin;
+extern FILE *yyin; 
 extern char *yytext;
 extern int yylineno;
 extern int lex_errors;
