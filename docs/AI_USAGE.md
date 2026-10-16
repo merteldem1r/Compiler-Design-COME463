@@ -13,6 +13,7 @@ Course policy: AI use must be acknowledged in every report, with **2–3 prompts
 | 2026-10-15 | P1 | Built the lexer (`tokens.h`, `lexer.l`, `main.c`, `Makefile`), the Part A study guide and the lexer walkthrough page | — | Spec v0.1 (written by the AI) said **15** keywords and **10** multi-char operators; the real counts are **16** and **13**. Caught while counting the 62 rules in the generated `lex.yy.c`; fixed in `LANGUAGE.md`, `tokens.h` and the walkthrough |
 | 2026-10-15 | P1 | Wrote the lexer test suite (7 files, 33 cases) and checked every expected line against the spec | — | The AI-written string rules had two bugs, found by the AI's own edge-case tests: a lone `\` before the newline in an unterminated string gave a second, confusing error; and `\r` from Windows line endings leaked into error messages. Fixed in `lexer.l` + spec; regression tests C32, C33 fail on the old lexer |
 | 2026-10-16 | P1 | BPE script + results; drafted SPEC, REPORT (incl. the 5 BPE answers) and the submission README from the project logs; built and dry-ran the zip | P-11, P-12 | (1) The BPE script first listed lexer errors after the tokens instead of in order; fixed before use. (2) SPEC design decision 1 first claimed munch "would fail on the second dot" (wrong: it would produce `FLOAT(0.)` + `.5`); reworded. (3) The report first numbered the bugs differently from the test-file headers; renumbered to match. Note: the lecture slide's `' 4','2'` split for `42` did not match any measured tokenizer; reported as measured |
+| 2026-10-16 | P1 | Rewrote REPORT.html in plainer first-person language; kept the student's own test file as C34 (header + expected output), regenerated BPE results, updated counts in README/PLAN/walkthrough | P-13 | (1) The first plain-language rewrite came out at 4 pages, over the 2-page limit; trimmed sentences until it fit 2 pages, checked by rendering the PDF. (2) Not an AI error but caught here: the student's commit `1fb7bd0` added a test without an expected output, so `make test` (and therefore `make package-p1`) failed 7/1 and the report's BPE numbers were stale |
 
 ## Prompts (verbatim)
 
@@ -51,3 +52,6 @@ Course policy: AI use must be acknowledged in every report, with **2–3 prompts
 
 **P-12 (2026-10-16):**
 > go with all the steps, let's complete the project1
+
+**P-13 (2026-10-16):**
+> could you please, for project1, make the report look a bit more human-written, like it was written by a human, by the student? There are a lot of too-complex explanations, I guess. Make them a bit more understandable for me as well when I read and explain to the lecturer. Make it a little bit easier to explain and more human-written, please. For project1, analyze the current structure of the repository and make the changes, please.

@@ -1,3 +1,7 @@
+// my_anka_code.anka: a short program I wrote myself to try the finished lexer.
+// C34  a call used directly as a print argument: print(power_sum(4)) -> RPAREN RPAREN
+//      and the file ends without a final newline: the last } is still read, then END
+
 fn power_sum(n: int) -> int {
     if (n == 0) { return 0; }
     return n ** 2 + power_sum(n - 1);

@@ -46,7 +46,7 @@ Part A study guide: `docs/study/p1-part-a-guide.md`.
 - [x] `src/lexer.l`, `src/tokens.h`, `src/main.c`, `Makefile` (`make`, `make test`) — builds warning-free with clang and gcc-15 (2026-10-15)
 - [x] `make package-p1` → `dist/project1.zip`; unzipped in an empty folder: builds warning-free (clang, gcc-15), 7/7 tests, BPE reproduces (2026-10-16)
 - [x] Lexer handles: maximal munch, keyword priority, line numbers, errors (report line, skip, continue), multi-char operators, both comment kinds, unterminated `/*` at EOF
-- [x] Tests: `tests/lexer/` 7 files, 33 cases C1–C33 (valid programs, edge cases, error cases) with `tests/lexer/expected/`; `make test` 7/7 pass (2026-10-15)
+- [x] Tests: `tests/lexer/` 8 files, 34 cases C1–C34 (valid programs, edge cases, error cases) with `tests/lexer/expected/`; `make test` 8/8 pass (2026-10-15; C34 = the student's own `my_anka_code.anka`, added 2026-10-16)
 - [x] Log every real bug we hit (the report needs **3 bugs**: what failed, why, how it was fixed). 3 logged below
 
 ### Part B: BPE comparison and report
@@ -57,7 +57,8 @@ Part A study guide: `docs/study/p1-part-a-guide.md`.
 - [x] Submission `README.md`: author, path, build instructions, AI tools used
 - [x] Zip layout: `project1/{README.md, SPEC.pdf, src/, tests/, output/, REPORT.pdf}` (+ `Makefile`, `bpe/`)
 - [ ] Optional: Linux build check in Docker (needs Docker Desktop running)
-- [ ] **Student: read and edit REPORT.html / SPEC.html** (BPE answers in own words), then `make pdf-p1 && make package-p1`
+- [x] REPORT rewritten in plainer first-person language, still 2 pages; numbers updated to 8 files / 34 cases / 512 vs 1,810 BPE tokens (2026-10-16)
+- [ ] **Student: read REPORT.html / SPEC.html and change anything that doesn't sound like you**, then `make pdf-p1 && make package-p1` (the zip must be rebuilt: it still has 7 tests)
 - [ ] Submit Part A PDF + `dist/project1.zip` on Classroom · `git tag p1-submission` · then update ROADMAP and rewrite this PLAN for P2
 
 ### Part A (handwritten, individual)
@@ -94,4 +95,5 @@ Part A study guide: `docs/study/p1-part-a-guide.md`.
 | 2026-10-16 | Zip also contains `Makefile` and `bpe/`; folder paths are Makefile variables (`TEST_DIR`, `EXPECTED_DIR`, `BPE_DIR`) | The assignment's layout (`tests/` + `output/`) differs from the repo's; one Makefile serves both, so the grader can `make test` |
 | 2026-10-16 | BPE table adds a "lexemes only" column | Separates "BPE also counts comments/whitespace" from "BPE cuts differently" (1,681 vs 610 vs 459 tokens) |
 | 2026-10-15 | Working deadline Mon 2026-10-19 | The directive's "Monday, October 20" is self-contradictory (Oct 20 is a Tuesday, the class day). Aim for the earlier date until confirmed |
+| 2026-10-16 | Keep the student's `my_anka_code.anka` as test 8 (C34); report rewritten in simpler first-person language | The student's own program is a real extra test (nested `))`, no final newline). A report the student can explain live matters more than polished wording |
 | 2026-10-14 | Close every session with `/wrap-up` → student runs the git block → `/exit`; a `SessionStart` hook flags sessions that skipped it | A session ended with `/exit` and its log was lost. Hooks run shell commands, not the agent, so they can only *detect* a missed wrap-up, not write it |

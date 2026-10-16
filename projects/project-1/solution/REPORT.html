@@ -29,60 +29,79 @@
 
 <h2>1 · Language design</h2>
 <p class="q">Why these keywords and operators?</p>
-<p>Anka is the language the whole semester's compiler will handle, so every token is there because a later phase (parser, type checker, code generator) needs it. Functions need <code>fn</code>, <code>return</code> and <code>-&gt;</code>. Declarations put the type after the name (<code>let x: int</code>), so the parser never has to ask C's question "is this a type or an expression?". Control flow covers both a condition loop and a counting loop (<code>if/else</code>, <code>while</code>, <code>for i in a..b</code>, <code>break</code>, <code>continue</code>). Three types and their literals (<code>int float bool true false</code>) keep type checking small. <code>print</code> is a keyword because Anka has no string type: strings may only appear as <code>print</code> arguments, which keeps P3/P4 free of string memory management. The operators are C's familiar arithmetic, comparison and logical set, plus <code>**</code> (power), compound assignment, <code>-&gt;</code> and <code>..</code>: 16 keywords and 22 operators, 13 of them multi-character.</p>
+<p>Anka is the language I will keep using for the whole semester (the parser, type checker and code generator come next), so I only added tokens that a later phase really needs:</p>
+<ul>
+  <li><b>Functions:</b> <code>fn</code>, <code>return</code>, and the arrow <code>-&gt;</code> for the return type.</li>
+  <li><b>Variables:</b> <code>let x: int = 5;</code> The type comes after the name, like in Rust. A declaration always starts with <code>let</code>, so the parser never has to guess whether a word is a type or a variable.</li>
+  <li><b>Control flow:</b> <code>if</code>/<code>else</code>, <code>while</code>, <code>for i in 0..10</code>, <code>break</code>, <code>continue</code>. <b>Types:</b> only <code>int</code>, <code>float</code>, <code>bool</code> (with <code>true</code>/<code>false</code>), so type checking stays simple.</li>
+  <li><b><code>print</code> is a keyword</b> because Anka has no string type. A string can only appear inside <code>print(...)</code>, so I won't have to manage string memory in the code generator.</li>
+</ul>
+<p>The operators are the usual C ones (arithmetic, comparison, <code>&amp;&amp;</code>, <code>||</code>, <code>!</code>) plus <code>**</code> for power, <code>+=</code>-style compound assignment, <code>-&gt;</code> and <code>..</code>. In total there are 16 keywords and 22 operators, and 13 of the operators are two characters long.</p>
 
 <p class="q">How are multi-character operators handled (<code>=</code> vs <code>==</code> vs <code>&lt;=</code>)?</p>
-<p>Each operator is a single Flex rule (<code>"="</code>, <code>"=="</code>, <code>"&lt;"</code>, <code>"&lt;="</code>, …), with no hand-written lookahead. Flex combines all rules into one DFA, and its generated <code>yylex()</code> applies <b>maximal munch</b>: it follows transitions as long as it can, remembers the last accepting state it passed, and backs up to it when stuck. On <code>==</code> it passes an accepting state for <code>ASSIGN</code> after one character and one for <code>EQ</code> after two, so <code>EQ</code> wins. Tests confirm the consequences: <code>a--&gt;b</code> → <code>IDENT MINUS ARROW IDENT</code>; <code>x**=2</code> → <code>POW ASSIGN</code> (there is no <code>**=</code>); <code>0..5</code> → <code>INT DOTDOT INT</code>, which works only because a float needs a digit after its dot.</p>
+<p>I didn't write any special code for this. Every operator is simply its own rule in <code>lexer.l</code>: <code>"="</code> is one rule, <code>"=="</code> is another, the same for <code>"&lt;"</code> and <code>"&lt;="</code>. Flex then follows <b>maximal munch</b>: it always takes the <i>longest</i> piece of input that matches a rule. On <code>==</code> it could stop after the first <code>=</code>, but it keeps reading, sees that <code>==</code> also matches, and returns <code>EQ</code>. Three results from my tests:</p>
+<ul>
+  <li><code>a--&gt;b</code> → <code>IDENT MINUS ARROW IDENT</code>. There is no <code>--</code> operator, so the first <code>-</code> is <code>MINUS</code> and then <code>-&gt;</code> follows.</li>
+  <li><code>x**=2</code> → <code>IDENT POW ASSIGN INT</code>, because Anka has no <code>**=</code> operator.</li>
+  <li><code>0..5</code> → <code>INT DOTDOT INT</code>. It does not become the float <code>0.</code>, because in Anka a float needs a digit after the dot.</li>
+</ul>
 
 <p class="q">Walk-through of the input <code>ifx</code></p>
 <table>
-<tr><th>Read</th><th>DFA state after it</th><th>Last accepting match remembered</th></tr>
-<tr><td><code>i</code></td><td>could still become <code>if</code>, <code>in</code>, <code>int</code>, or any identifier</td><td>1 char → <code>IDENT</code></td></tr>
-<tr><td><code>f</code></td><td>both the keyword rule <code>"if"</code> and the identifier rule accept; Flex stored the rule listed <b>first</b>: <code>IF</code></td><td>2 chars → <code>IF</code></td></tr>
-<tr><td><code>x</code></td><td>only the identifier rule can continue</td><td>3 chars → <code>IDENT</code></td></tr>
-<tr><td>space / end</td><td>no transition: back up to the last accepting position</td><td>result: <code>LINE 1: IDENT 'ifx'</code></td></tr>
+<tr><th>Step</th><th>What happens</th><th>Flex remembers</th></tr>
+<tr><td>read <code>i</code></td><td>Only the identifier rule matches so far (it could still become <code>if</code>, <code>in</code> or <code>int</code>).</td><td>1 char = <code>IDENT</code></td></tr>
+<tr><td>read <code>f</code></td><td><code>if</code> matches <b>two</b> rules: the keyword and the identifier. Same length, so the rule written first in <code>lexer.l</code> wins.</td><td>2 chars = <code>IF</code></td></tr>
+<tr><td>read <code>x</code></td><td><code>ifx</code> is not a keyword, only the identifier rule still matches.</td><td>3 chars = <code>IDENT</code></td></tr>
+<tr><td>space / end</td><td>Nothing can continue, so Flex returns the last match it remembered.</td><td><code>IDENT 'ifx'</code></td></tr>
 </table>
-<p>Maximal munch decides: 3 characters beat 2. Rule priority only matters on a tie: for <code>if</code> alone both rules match 2 characters, and the keyword wins because it is listed before the identifier rule. If the identifier rule were listed first, every keyword would become an <code>IDENT</code>.</p>
+<p>So the longest match wins first (3 characters beat 2), and the order in the file only decides a tie. That's why the keywords are written <i>before</i> the identifier rule in <code>lexer.l</code>; otherwise <code>if</code> would also become an <code>IDENT</code>.</p>
 
 <h2>2 · Testing and bugs</h2>
-<p>The suite has 7 files in <code>tests/</code> with 33 numbered cases (C1–C33; each file's header comment lists its cases), and golden outputs in <code>output/</code>. <code>make test</code> diffs the actual output against them: <b>7/7 pass</b>. The files cover: valid programs (C1–C3, 0 errors), munch and priority (C4–C12), numbers (C13–C19), strings and comments (C20–C26, C32), error recovery (C27–C30), an unterminated comment (C31), and Windows line endings (C33).</p>
+<p>There are 8 test files in <code>tests/</code> with 34 numbered cases (C1–C34). Each file's first comment lists its cases, and <code>output/</code> has the expected output. <code>make test</code> runs the lexer on every file and compares: <b>all 8 pass</b>. The cases cover valid programs (C1–C3, and C34, a small program I wrote myself at the end to try the lexer), maximal munch and keyword priority (C4–C12), numbers (C13–C19), strings and comments (C20–C26, C32), error recovery (C27–C30), a comment that is never closed (C31) and Windows line endings (C33).</p>
 <h3>Three bugs</h3>
 <ol>
-  <li><b>Compiler warning inside generated code.</b> <i>Failed:</i> <code>make</code> printed a <code>-Wsign-compare</code> warning in <code>lex.yy.c</code>. <i>Why:</i> the scanner generated by Apple's Flex 2.6.4 compares a signed <code>int</code> with an unsigned <code>yy_size_t</code>; our <code>-Wextra</code> flags it, and generated code cannot be edited. <i>Fix:</i> compile <code>lex.yy.c</code> separately with <code>-Wno-sign-compare</code>; our own <code>main.c</code> keeps every warning. The project now builds warning-free with clang and gcc 15.</li>
-  <li><b>Backslash at the end of an unterminated string (test C32).</b> <i>Failed:</i> <code>print("abc\</code> followed by a newline gave two errors, "unterminated string" and "unexpected character '\'". <i>Why:</i> the escape part of the regex, <code>\\.</code>, needs a character after the backslash, and in Flex <code>.</code> never matches a newline. So the match stopped just before the <code>\</code>, and the catch-all rule reported it separately. <i>Fix:</i> the unterminated-string rule now ends in <code>\\?</code> (an optional lone backslash), so maximal munch puts it inside the one error.</li>
-  <li><b>Windows line endings (test C33).</b> <i>Failed:</i> in a <code>\r\n</code> file, an unterminated string's error message contained an invisible <code>\r</code>, which moved the terminal cursor and scrambled the output. <i>Why:</i> the string character class <code>[^"\\\n]</code> excluded <code>\n</code> but not <code>\r</code>. <i>Fix:</i> exclude both (<code>[^"\\\r\n]</code>, escapes <code>\\[^\r\n]</code>); the <code>\r</code> is then skipped as whitespace. A <code>.gitattributes</code> rule stops git from converting the test file's line endings.</li>
+  <li><b>A warning in code I didn't write.</b> Running <code>make</code> printed a <code>-Wsign-compare</code> warning (a signed number compared with an unsigned one) inside <code>lex.yy.c</code>. That file is generated by Flex, so I can't edit it. <i>Fix:</i> compile <code>lex.yy.c</code> separately with only that warning turned off. My own <code>main.c</code> still gets every warning, and the project now builds with no warnings on both clang and gcc.</li>
+  <li><b>A backslash at the end of an unclosed string (test C32).</b> For <code>print("abc\</code> and then a new line I expected one error ("unterminated string") but also got "unexpected character '\'". <i>Why:</i> in my string regex an escape is <code>\\.</code>, a backslash plus one more character, and in Flex <code>.</code> never matches a newline. So the match stopped before the lone <code>\</code>, and it went to the catch-all error rule. <i>Fix:</i> the unclosed-string rule now allows one optional backslash at the end (<code>\\?</code>), so the <code>\</code> becomes part of the same error.</li>
+  <li><b>Windows line endings (test C33).</b> Windows ends a line with two characters, <code>\r\n</code>, not just <code>\n</code>. In such a file, the error for an unclosed string contained the invisible <code>\r</code>, which moves the cursor back to the start of the line, so the terminal output got scrambled. <i>Why:</i> my string regex excluded <code>\n</code> but forgot <code>\r</code>. <i>Fix:</i> exclude both (<code>[^"\\\r\n]</code>). I also added a <code>.gitattributes</code> rule so git doesn't convert this test file's line endings.</li>
 </ol>
-<p>For bugs 2 and 3 we rebuilt the lexer from the commit before the fix and confirmed that the new tests fail on it, so the tests really do catch these bugs.</p>
+<p>For bugs 2 and 3, I built the old version of the lexer and checked that the new tests really fail on it, so the tests would have caught these bugs.</p>
 <h3>Edge cases and surprises</h3>
 <ul>
-  <li><code>123abc</code> is <b>not</b> a lexical error: munch splits it into <code>INT_LIT IDENT</code>, and rejecting it is the parser's job.</li>
-  <li><code>007</code> is an error but <code>007.5</code> is a valid float, as in Python 3: the integer ban exists because C reads <code>007</code> as octal, and floats never had that meaning.</li>
-  <li><code>1...5</code> → <code>INT DOTDOT</code>, then an error for the lone <code>.</code>, then <code>INT</code>. An unterminated string swallows the rest of its line, including <code>);</code>.</li>
-  <li>A Turkish letter outside a string gives <b>two</b> errors, because <code>ğ</code> is two bytes in UTF-8 (<code>\xC4 \x9F</code>).</li>
-  <li>The generated <code>lex.yy.c</code> declares <code>YY_NUM_RULES 62</code>. Reconciling that number with our rules showed that the spec had miscounted the keywords (15 instead of 16).</li>
+  <li><code>123abc</code> is <b>not</b> an error for the lexer: it becomes <code>INT_LIT</code> and then <code>IDENT</code>. Rejecting it is the parser's job.</li>
+  <li><code>007</code> is an error but <code>007.5</code> is a valid float, like in Python 3 (C reads <code>007</code> as octal; floats don't have that problem).</li>
+  <li>A Turkish letter like <code>ğ</code> outside a string gives <b>two</b> errors, not one. It takes two bytes in UTF-8, and my lexer reads bytes.</li>
+  <li><code>lex.yy.c</code> says it has 62 rules. Counting my rules to match that, I found my spec said 15 keywords instead of 16.</li>
 </ul>
 
 <h2 class="pagebreak">3 · AI usage and BPE comparison</h2>
 <h3>AI usage</h3>
-<p><b>Tool:</b> Claude Code (Anthropic, model Claude Opus 5.5), used in the terminal inside the project repository. No other AI tools were used. <b>How:</b> planning the work; designing the language through multiple-choice questions (I picked every feature); writing first versions of the spec, the lexer, the tests and the BPE script; drafting this report and the SPEC from our project logs, which I then reviewed; and explaining every file in plain language, including an interactive walkthrough page I studied before submitting. My working rules for the AI: explain every change, never run git write commands (I made every commit myself), and log every AI mistake in <code>docs/AI_USAGE.md</code>. Part A was done by hand; there the AI only acted as a tutor, with similar practice problems.</p>
-<p><b>Three prompts, verbatim:</b></p>
+<p><b>Tool:</b> Claude Code (Anthropic, Claude Opus 5.5) in my terminal, inside the project folder. No other AI tools. I used it to:</p>
+<ul>
+  <li>plan the work and keep notes between sessions;</li>
+  <li>design the language: it asked me multiple-choice questions and I picked every feature;</li>
+  <li>write the first versions of the spec, the lexer, the tests and the BPE script;</li>
+  <li>write the first draft of this report and the SPEC from my notes; I then had it simplify the wording and checked every sentence against the code and test results;</li>
+  <li>explain every file to me in plain language, including a walkthrough page I studied before submitting.</li>
+</ul>
+<p>My rules for it were: explain every change, never run git commands that change history (I made every commit myself), and write down each mistake it made in <code>docs/AI_USAGE.md</code>. Part A I did by hand; there the AI only acted as a tutor and gave me similar practice problems.</p>
+<p><b>Three of my prompts, verbatim:</b></p>
 <div class="prompt">"let's pick it together, ask me questions and give me the interesting options" (designing the language)</div>
 <div class="prompt">"yes, start the test suite with the 6-file plan"</div>
 <div class="prompt">"before that I want from you the complete in human way understandable explanations about what you have done on each file, what is the purpose, what is the code that you've written serve for, imagine that I'm someone who is new at the compiler design so I want to truly understand what was done"</div>
 <p><b>What the AI got wrong, and how it was fixed:</b></p>
 <ul>
-  <li>Its string rules contained bugs 2 and 3 (Section 2). They were found by its own edge-case tests, fixed, and covered by regression tests.</li>
-  <li>Spec v0.1 claimed 15 keywords and 10 multi-character operators; the real numbers are 16 and 13. This was caught from the 62 rules in the generated <code>lex.yy.c</code> and corrected.</li>
-  <li>Spec v0.1's float regex accepted <code>007.5</code> while <code>007</code> was an error, an inconsistency the AI didn't notice when writing it. I chose to keep the behaviour, and the spec now gives the reason.</li>
-  <li>Its first end-of-session script ran <code>git commit</code> by itself, against my rule. It was rewritten to only print the commands, and git writes are now blocked in the tool's settings.</li>
+  <li>Bugs 2 and 3 from Section 2 came from its string rules. Its own edge-case tests found them, and both now have tests.</li>
+  <li>The first version of the spec said 15 keywords and 10 two-character operators. The real numbers are 16 and 13. I caught this through the 62 rules in <code>lex.yy.c</code>.</li>
+  <li>Its first float regex accepted <code>007.5</code> while <code>007</code> was an error, and it didn't notice that the two rules disagree. I decided to keep this behaviour on purpose, and the spec now explains why.</li>
+  <li>Its first end-of-session script ran <code>git commit</code> by itself, against my rule. It was changed to only print the commands, and git writes are now blocked in the tool's settings.</li>
 </ul>
 
 <h3>BPE comparison</h3>
-<p>Tokenizer: <code>tiktoken.encoding_for_model("gpt-4")</code> = <code>cl100k_base</code> (tiktoken 0.14.0). The script is <code>bpe/bpe_compare.py</code>; the full output is in <code>bpe/results.md</code> (<code>make bpe</code> regenerates it). In the table, <code>␣</code> marks a space.</p>
+<p>I used tiktoken with the GPT-4 tokenizer (<code>cl100k_base</code>, tiktoken 0.14.0). The script is <code>bpe/bpe_compare.py</code>, and the full output is in <code>bpe/results.md</code> (<code>make bpe</code> creates it again). In the table, <code>␣</code> stands for a space.</p>
 <table>
-<tr><th>Input</th><th>Our lexer</th><th>BPE (GPT-4)</th></tr>
-<tr><td>All 7 test files (5,082 characters)</td><td>459 tokens (+ 27 errors)</td><td>1,681 tokens</td></tr>
-<tr><td>Same content without comments or extra whitespace</td><td>459</td><td>610</td></tr>
+<tr><th>Input</th><th>My lexer</th><th>BPE (GPT-4)</th></tr>
+<tr><td>All 8 test files (5,503 characters)</td><td>512 tokens (+ 27 errors)</td><td>1,810 tokens</td></tr>
+<tr><td>Same code without comments or extra spaces</td><td>512</td><td>672</td></tr>
 <tr><td><code>let x = 42;</code></td><td>5: <code>LET IDENT ASSIGN INT_LIT SEMI</code></td><td>6: <code>let · ␣x · ␣= · ␣ · 42 · ;</code></td></tr>
 <tr><td><code>3.14159</code> · <code>1000</code></td><td>1 · 1</td><td>4: <code>3 · . · 141 · 59</code> · 2: <code>100 · 0</code></td></tr>
 <tr><td><code>ifx</code></td><td>1: <code>IDENT(ifx)</code></td><td>2: <code>if · x</code></td></tr>
@@ -90,11 +109,11 @@
 <tr><td>Turkish vs English sentence</td><td>(not Anka)</td><td>14 tokens for 3 words vs 4 tokens for 4 words</td></tr>
 </table>
 <ol>
-  <li><b>How many tokens, and why the difference?</b> BPE produces 3.7× more tokens (1,681 vs 459), mostly because it also encodes comments and whitespace, which our lexer discards. On the same content the ratio drops to 1.3× (610 vs 459). The rest comes from BPE cutting numbers and rare words into frequent pieces, although it also merges some sequences we split (<code>--&gt;</code> is a single BPE token, where we produce <code>MINUS ARROW</code>).</li>
-  <li><b><code>42</code>:</b> BPE keeps <code>42</code> as one token, but the space before it becomes a separate token. GPT-4's pre-tokenizer splits digits into groups of 1–3 and never attaches a space to a number, so <code>1000</code> becomes <code>100 · 0</code>. <i>Surprise:</i> the lecture slide shows <code>' 4','2'</code>, but none of the encodings we tested (gpt2, cl100k, o200k) does that; GPT-2 gives <code>' 42'</code>. Our lexer produces one <code>INT_LIT</code> of any length, because the parser needs the value, not its pieces.</li>
-  <li><b>Error characters such as <code>@</code>:</b> our lexer reports <code>unexpected character '@'</code> with its line number, skips it and continues; the program is invalid. For BPE, <code>@</code> is just a vocabulary token: BPE has no error state at all. Anything unknown falls back to raw bytes (the hieroglyph 𓂀 becomes 4 byte tokens), so any input can be tokenized.</li>
-  <li><b>Which is better for a parser, and for a neural network?</b> For a <b>parser</b>, the lexer: its tokens carry categories (<code>IF</code> vs <code>IDENT</code> vs <code>INT_LIT</code>), it guarantees keyword and identifier boundaries, and it reports errors. BPE splits <code>ifx</code> into <code>if · x</code>, so a parser would see a keyword that isn't there. For a <b>neural network</b>, BPE: a fixed vocabulary of about 100k ids, no failure on any text in any language, and frequent strings become single tokens, so sequences stay short; the network learns the meaning itself.</li>
-  <li><b>Why does the Turkish sentence take more tokens?</b> <code>"Derleyici belirteçleri ayrıştırır"</code> takes 14 tokens for 3 words (4.7 per word); <code>"The compiler parses tokens"</code> takes 4 for 4 words. BPE learns its merges from training text that is mostly English, so common English words become single tokens. Turkish builds words by stacking suffixes (<code>belirteç+leri</code>, <code>ayrıştır+ır</code>), so whole words are rarely seen and get split. Letters like <code>ı ş ç</code> take 2 bytes in UTF-8 and merge less often (for example, <code>ç</code> ends up as a token by itself).</li>
+  <li><b>How many tokens, and why the difference?</b> BPE gives about 3.5 times more tokens (1,810 vs 512). The main reason is that BPE also turns comments, spaces and newlines into tokens, while my lexer throws them away. If I give BPE only the code (no comments, single spaces), the gap shrinks to 672 vs 512, about 1.3 times. The rest is because BPE cuts long numbers and rare words into pieces. Sometimes it's the other way around: <code>--&gt;</code> is one BPE token, but my lexer gives <code>MINUS ARROW</code>.</li>
+  <li><b><code>42</code>:</b> BPE keeps <code>42</code> as one token, but the space before it becomes a separate token. GPT-4 splits numbers into groups of at most 3 digits (<code>1000</code> → <code>100 · 0</code>). <i>Surprise:</i> the lecture slide shows <code>' 4','2'</code>, but none of the tokenizers I tried (gpt2, cl100k, o200k) does that; GPT-2 gives <code>' 42'</code> as one token. My lexer always makes one <code>INT_LIT</code>, however long the number is, because the parser needs the number's value, not pieces of it.</li>
+  <li><b>Error characters like <code>@</code>:</b> my lexer prints <code>unexpected character '@'</code> with the line number, skips it and keeps going; the program is invalid. BPE has no idea of an error: <code>@</code> is just another token in its vocabulary. Unknown characters are split into raw bytes (the hieroglyph 𓂀 becomes 4 byte tokens), so BPE can tokenize anything.</li>
+  <li><b>Which is better for a parser, and for a neural network?</b> For a <b>parser</b>, my lexer: every token has a category (<code>IF</code>, <code>IDENT</code>, <code>INT_LIT</code>), keywords and identifiers are always split correctly, and errors are reported. BPE splits <code>ifx</code> into <code>if · x</code>, so a parser would see a keyword that isn't really there. For a <b>neural network</b>, BPE: a fixed vocabulary (about 100k tokens), it never fails on any text, and common strings become one token, so inputs stay short. The network learns the meaning itself.</li>
+  <li><b>Why does the Turkish sentence need more tokens?</b> <code>"Derleyici belirteçleri ayrıştırır"</code> takes 14 tokens for 3 words (about 4.7 per word), while <code>"The compiler parses tokens"</code> takes 4 tokens for 4 words. BPE learned its merges mostly from English text, so common English words are single tokens. Turkish builds words by adding suffixes (<code>belirteç + leri</code>, <code>ayrıştır + ır</code>), so a full word is rare in the training data and gets split. Letters like <code>ı ş ç</code> take 2 bytes in UTF-8 and get merged less often; <code>ç</code>, for example, ends up as a token on its own.</li>
 </ol>
 </body>
 </html>

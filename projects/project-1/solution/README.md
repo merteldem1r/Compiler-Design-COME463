@@ -14,7 +14,7 @@ project1/
 ├── REPORT.pdf       design, testing and bugs, AI usage + BPE comparison
 ├── Makefile         build, test, BPE
 ├── src/             the lexer: lexer.l (Flex rules), tokens.h (token codes), main.c (driver)
-├── tests/           7 test files, 33 numbered cases (each file's header lists its cases)
+├── tests/           8 test files, 34 numbered cases (each file's header lists its cases)
 ├── output/          expected output for each test (tests/X.anka -> output/X.out)
 └── bpe/             BPE comparison: bpe_compare.py, requirements.txt, results.md
 ```
@@ -27,7 +27,7 @@ Requirements: Flex 2.6, a C11 compiler (gcc or clang), make.
 make                                       # builds build/ankac
 ./build/ankac --tokens tests/numbers.anka  # one token per line: LINE n: NAME 'lexeme'
 echo 'let x@y = 5;' | ./build/ankac --tokens
-make test                                  # runs every test, compares with output/; expects "7 passed, 0 failed"
+make test                                  # runs every test, compares with output/; expects "8 passed, 0 failed"
 make clean                                 # deletes build/
 ```
 

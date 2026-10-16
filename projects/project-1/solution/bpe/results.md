@@ -11,12 +11,12 @@ Tokenizer: `tiktoken.encoding_for_model("gpt-4")` = `cl100k_base` (tiktoken 0.14
 | `crlf_line_endings.anka` | 302 | 21 | 1 | 93 | 26 |
 | `errors.anka` | 472 | 20 | 15 | 138 | 24 |
 | `munch_priority.anka` | 913 | 81 | 2 | 294 | 87 |
-| `my_anka_code.anka` | 167 | 53 | 0 | 63 | 62 |
+| `my_anka_code.anka` | 421 | 53 | 0 | 129 | 62 |
 | `numbers.anka` | 648 | 31 | 5 | 303 | 80 |
 | `strings_comments.anka` | 1172 | 77 | 3 | 340 | 111 |
 | `unterminated_comment.anka` | 349 | 7 | 1 | 92 | 8 |
 | `valid_programs.anka` | 1226 | 222 | 0 | 421 | 274 |
-| **Total** | **5249** | **512** | **27** | **1744** | **672** |
+| **Total** | **5503** | **512** | **27** | **1810** | **672** |
 
 ## 2. Small inputs side by side
 
