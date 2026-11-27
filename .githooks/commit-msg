@@ -1,0 +1,67 @@
+#!/bin/sh
+# commit-msg hook: reject a commit whose message breaks the repo's style
+# (.claude/rules/workflow.md). Git runs it with one argument: the file that holds the
+# message. Exit 0 = accept, exit 1 = reject (the commit is not made).
+# Install once per clone:  make hooks   (= git config core.hooksPath .githooks)
+# CI runs the same script on every pushed commit. Bypass in an emergency: git commit --no-verify
+#
+# Rules for the first line (the "subject"):
+#   <type>: <summary>          type = feat | fix | docs | test | refactor | chore | ci
+#   at most 72 characters, no period at the end, imperative mood ("add", not "added")
+# If there is more text (a body or a Co-Authored-By trailer), line 2 must be blank.
+
+msg_file="$1"
+if [ -z "$msg_file" ] || [ ! -f "$msg_file" ]; then
+    echo "commit-msg: usage: commit-msg <message-file>" >&2
+    exit 1
+fi
+
+# Git puts help text in the message file as lines starting with '#'; drop them.
+# Also stop at the "scissors" line that `git commit -v` adds above the diff.
+clean=$(sed -e '/^# ------------------------ >8 ------------------------$/,$d' -e '/^#/d' "$msg_file")
+subject=$(printf '%s\n' "$clean" | sed -n '1p')
+line2=$(printf '%s\n' "$clean" | sed -n '2p')
+
+# Messages git writes itself are always fine.
+case "$subject" in
+    "Merge "*|"Revert "*|"fixup! "*|"squash! "*) exit 0 ;;
+esac
+
+errors=0
+fail() {
+    echo "commit-msg: $1" >&2
+    errors=$((errors + 1))
+}
+
+types='feat|fix|docs|test|refactor|chore|ci'
+if ! printf '%s\n' "$subject" | grep -Eq "^($types): [^ ]"; then
+    fail "the subject must start with '<type>: ' where type is one of: $(echo $types | tr '|' ' ')"
+fi
+
+length=${#subject}
+if [ "$length" -gt 72 ]; then
+    fail "the subject is $length characters long; the limit is 72"
+fi
+
+case "$subject" in
+    *.) fail "the subject must not end with a period" ;;
+esac
+
+# Imperative mood, checked by a simple rule: the first word after the type must not end
+# in "ed" ("added", "fixed"). Words that really end in "ed", such as "embed", are allowed.
+first_word=$(printf '%s\n' "$subject" | sed -n 's/^[a-z]*: \([^ ]*\).*/\1/p')
+case "$first_word" in
+    embed|need|seed|speed|feed|shred) ;;
+    *ed) fail "write the summary in imperative mood: '$first_word' -> e.g. 'add', 'fix', 'update'" ;;
+esac
+
+if [ -n "$line2" ]; then
+    fail "leave line 2 empty: it separates the subject from the body"
+fi
+
+if [ "$errors" -gt 0 ]; then
+    echo "commit-msg: rejected: $subject" >&2
+    echo "commit-msg: example:  feat: add Bison grammar for let and if" >&2
+    exit 1
+fi
+exit 0

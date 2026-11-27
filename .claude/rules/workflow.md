@@ -22,5 +22,5 @@ git commit -m "<type>: <short summary>"
 ```
 
 - List files explicitly; avoid `git add -A` unless every change belongs in the commit.
-- Message style: `docs:`, `feat:`, `fix:`, `test:`, `chore:` prefix, under 72 characters, imperative mood ("add lexer rules", not "added").
+- Message style: `feat:`, `fix:`, `docs:`, `test:`, `refactor:`, `chore:` or `ci:` prefix, at most 72 characters, no final period, imperative mood ("add lexer rules", not "added"). `.githooks/commit-msg` enforces this locally (enable once with `make hooks`), and CI checks every pushed commit with the same script.
 - If nothing changed, say so and show no git block.

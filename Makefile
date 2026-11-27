@@ -1,6 +1,7 @@
 # Makefile for fplc, the Anka compiler (final project, projects/final-project/directives/).
 #   make          build build/fplc
 #   make tools    print the tool versions (README.md must state the LLVM version)
+#   make hooks    use the repo's git hooks in .githooks/ (once per clone)
 #   make clean    delete build/
 # Grows phase by phase: parser.y + ast.c (Phase 1), check.c (Phase 2), codegen.c +
 # runtime.c + run_tests.sh (Phase 3). Until the walking skeleton replaces main.c,
@@ -8,7 +9,8 @@
 # Generated files and binaries live in build/ and are never committed.
 
 CC     ?= cc
-CFLAGS  = -std=c11 -Wall -Wextra -pedantic -D_POSIX_C_SOURCE=200809L
+# EXTRA_CFLAGS is empty here; CI sets it to -Werror so any warning fails the build.
+CFLAGS  = -std=c11 -Wall -Wextra -pedantic -D_POSIX_C_SOURCE=200809L $(EXTRA_CFLAGS)
 BUILD   = build
 
 # Homebrew installs Bison 3 and LLVM "keg-only": they are NOT on the PATH, because macOS
@@ -46,7 +48,13 @@ tools:
 	@$(CLANG) --version | head -1
 	@$(OPT) --version | grep -i 'llvm version'
 
+# Git only runs hooks from .git/hooks/, which is not versioned. This points it at the
+# tracked .githooks/ folder instead (a local config change, not a commit).
+hooks:
+	git config core.hooksPath .githooks
+	@echo "git hooks enabled: .githooks/commit-msg checks every commit message"
+
 clean:
 	rm -rf $(BUILD)
 
-.PHONY: all tools clean
+.PHONY: all tools hooks clean
