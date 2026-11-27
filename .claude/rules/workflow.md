@@ -22,5 +22,6 @@ git commit -m "<type>: <short summary>"
 ```
 
 - List files explicitly; avoid `git add -A` unless every change belongs in the commit.
+- One `-m` with the subject line only. **No `Co-Authored-By` or other trailers** (the student's choice, 2026-11-27); AI use is disclosed in `docs/AI_USAGE.md` and the reports instead.
 - Message style: `feat:`, `fix:`, `docs:`, `test:`, `refactor:`, `chore:` or `ci:` prefix, at most 72 characters, no final period, imperative mood ("add lexer rules", not "added"). `.githooks/commit-msg` enforces this locally (enable once with `make hooks`), and CI checks every pushed commit with the same script.
 - If nothing changed, say so and show no git block.
