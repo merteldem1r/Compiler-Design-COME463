@@ -19,6 +19,7 @@ Course policy: AI use must be acknowledged in every report, with **2–3 prompts
 | 2026-11-27 | Final | Drafted `docs/LANGUAGE.md` v1.0; tested two grammar variants in Bison first | P-16 | (1) The AI's first grammar plan (`{ fndef } expr`, as in the directive) had 3 shift/reduce conflicts. Found by running Bison, not by reasoning; switched to a required `fn main`. (2) In the draft, example 6's error column was wrong (20 → 16) and the count of 2-char operators was wrong (6 → 7). Both caught by re-checking by hand before handing the draft over |
 | 2026-11-27 | Final | Wrote the commit-msg hook, `make hooks`, and the GitHub Actions CI workflow; noticed the repo is public | P-17 | Not an error, but a limitation: the imperative-mood check is a simple "first word ends in -ed" rule with a small list of exceptions (`embed`, `need`, …), so it can miss things or flag a rare real word |
 | 2026-11-27 | Final | Rewrote the root README (purpose, pipeline, status, requirements, build/run, tests, structure, workflow) | P-18 | No error caught. The README keeps the current state (`fplc --tokens`, the P1 token dumper) separate from the planned CLI, so it doesn't claim features that don't exist yet |
+| 2026-11-27 | Final | Ran the spec review as three rounds of multiple-choice questions (10 choices, each with the trade-off explained), then applied the answers to LANGUAGE.md and PLAN.md | P-19, P-20 | (1) The AI had suggested commit commands with a `Co-Authored-By` trailer; the student asked to drop it, and the rule is now in `workflow.md`. (2) The draft had bundled three features into one review item (`%`, `!`, nested comments), so the student's "no" was ambiguous; a follow-up question separated them |
 
 ## Prompts (verbatim)
 
@@ -75,3 +76,9 @@ Course policy: AI use must be acknowledged in every report, with **2–3 prompts
 
 **P-18 (2026-11-27):**
 > before that could you please fill the readme.md file please, at least with basic explanations, folder file structure, requiremenmtens, running project etc. so someone who reads the readme.md has brief understanding what is the project about, how works, etc
+
+**P-19 (2026-11-27):**
+> could you please remove the co authored by, message please, don't use that the main normal message is enough
+
+**P-20 (2026-11-27):**
+> leave them as they are, let's review the LANGUAGE.md now

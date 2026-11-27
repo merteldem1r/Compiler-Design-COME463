@@ -45,12 +45,12 @@ Interface fixed by the directive: `./fplc prog.fpl --emit-ast`, `./fplc prog.fpl
 - [x] `.githooks/commit-msg` + `make hooks`; `.github/workflows/ci.yml` (commit messages, gcc + clang `-Werror`, P1 tests, `run_tests.sh` when it exists) (2026-11-27)
 - [ ] **Student:** make the GitHub repo private (it is PUBLIC; course policy forbids posting solutions), run `make hooks`, push, and check that the first CI run is green
 - [x] `docs/LANGUAGE.md` v1.0 **draft**: tokens, grammar (Bison-checked, 0 conflicts), precedence, type rules, semantics, CLI, messages, AST dump, 6 examples with hand-computed output, design decisions (2026-11-27)
-- [ ] **Student reviews** `docs/LANGUAGE.md` §12 checklist → v1.0 final
+- [x] Student review of `docs/LANGUAGE.md` → **v1.0 final** (§12 review outcome) (2026-11-27)
 - [ ] `SPEC.md` v1 (≤ 2 pages, 5+ example programs), made from LANGUAGE.md. Keep v1 forever: it is the LLM experiment's baseline
 - [ ] Walking skeleton `print_int(42)` end to end
 
 ### Phase 1: parser + AST
-- [ ] Lexer: remove P1-only tokens (loops, assignment ops, float, string, `**`, `..`, braces/`;`); add `then`, `fun`, `print_int`/`print_bool` as built-in names; track **columns** (`yylloc`); diagnostics in the new format on stderr
+- [ ] Lexer: remove P1-only tokens (loops, assignment ops, float, string, `**`, `..`, braces/`;`, `%`) and the nested-comment depth counter; add `then`, `fun`, `print_int`/`print_bool` as built-in names; track **columns** (`yylloc`); diagnostics in the new format on stderr
 - [ ] `tokens.h` replaced by Bison's generated header
 - [ ] `src/parser.y` (Bison 3): grammar + precedence; `let…in` / `if…else` / `fun` extend as far right as possible
 - [ ] `src/ast.{c,h}`: AST node types, constructors, `free`, `--emit-ast` printer
@@ -66,10 +66,10 @@ Interface fixed by the directive: `./fplc prog.fpl --emit-ast`, `./fplc prog.fpl
 - [ ] Tests: ≥ 5 type errors, ≥ 3 recovery files in total (multiple errors, no cascades)
 
 ### Phase 3: LLVM code generation
-- [ ] `--emit-ll -o`: `add/sub/mul/sdiv/srem/icmp`, `if` → `br` + `phi`, `let` → SSA values, calls, recursion
+- [ ] `--emit-ll -o`: `add/sub/mul/sdiv/icmp`, `if` → `br` + `phi`, `let` → SSA values, calls, recursion
 - [ ] `&&` / `||` short-circuit (branches + `phi`, not `and`/`or`)
 - [ ] Function values as `ptr`; lambdas lifted to hidden top-level functions (possible because they cannot capture)
-- [ ] Division by zero: check before `sdiv`/`srem`, call a runtime function that prints to stderr and exits nonzero. Also `INT_MIN / -1` (UB in LLVM, but our ints wrap)
+- [ ] Division by zero: check before `sdiv`, call a runtime function that prints to stderr and exits nonzero. Also `INT_MIN / -1` (UB in LLVM, but our ints wrap)
 - [ ] `runtime.c`: `print_int`, `print_bool`, the div-by-zero handler
 - [ ] Decide what to do about clang's `-Woverride-module` warning (target triple)
 - [ ] `run_tests.sh`: builds, runs valid/errors/recovery, `opt -passes=verify` on every `.ll`, prints PASS/FAIL; truncation test (cut valid files at random points: never a crash)
@@ -113,4 +113,6 @@ Interface fixed by the directive: `./fplc prog.fpl --emit-ast`, `./fplc prog.fpl
 | 2026-11-27 | P1 frozen as a buildable snapshot in `projects/project-1/code/`; the root `src/lexer.l` is the copy that evolves | P1 stays reproducible; `git diff` shows how the lexer changed for the final project |
 | 2026-11-27 | Commit-message hook in a tracked `.githooks/` (enabled by `make hooks`), and the same script in CI, which checks only newly pushed commits | `.git/hooks/` is not versioned. One script means the local and CI rules can't drift. Old commits (`last updates`, `testing with own .anka code`) are history and are not rewritten |
 | 2026-11-27 | CI on GitHub Actions, Ubuntu 24.04, gcc + clang with `-Werror` | Linux + gcc is the grading environment; apt's LLVM 18 also checks that our IR isn't tied to LLVM 23 |
+| 2026-11-27 | **Spec v1.0 review:** `main`'s result ignored (exit 0); `print_int`/`print_bool` return 0; `fun` takes any number of parameters; optional `let x: int`; one non-associative comparison level; integer literals > 2147483647 are lexical errors; runtime error `file:line:col: runtime error: division by zero`, exit 1; extra modes `--check` + `--tokens`; indented-tree AST dump | Student's answers to the §12 checklist (LANGUAGE.md §12) |
+| 2026-11-27 | **Remove `%` and nested comments; keep `!`** | Student's choice: a smaller lexer, grammar and codegen. Remainder becomes a helper `rem(a, b) = a - a / b * b`. Whether the LLM keeps writing `%` is something to watch in the experiment |
 | 2026-11-27 | Verify IR with `opt -passes=verify -disable-output` | LLVM 23 rejects the directive's `opt -verify` (old pass-manager syntax). Same check, new spelling |

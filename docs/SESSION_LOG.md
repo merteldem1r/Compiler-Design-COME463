@@ -14,6 +14,8 @@ Newest entry on top. One entry per working session, written by `/wrap-up`.
 - Rewrote `docs/PLAN.md` (final-project schedule, checklist per phase, decisions) and `docs/ROADMAP.md`; updated `CLAUDE.md`, `.claude/rules/c-flex.md` (diagnostics, Bison, LLVM, new test layout), `docs-and-memory.md`, the `/wrap-up` skill.
 - Drafted `docs/LANGUAGE.md` **v1.0** (functional Anka): 11 keywords, 16 operators, EBNF grammar, precedence table, type rules, scopes/capture, semantics (wrapping, `INT_MIN / -1`, div-by-zero), CLI, diagnostic catalog, AST dump format, 6 example programs with hand-computed output, 6 design decisions, §12 review checklist. Grammar checked in Bison before writing it.
 - `.githooks/commit-msg` (type prefix, ≤ 72 chars, no period, imperative, blank line 2), `make hooks`, and `.github/workflows/ci.yml` (commit-message job + gcc/clang `-Werror` build matrix + P1 tests + `run_tests.sh` when present). Hook tested on 13 sample messages and the real history; both compilers build with `-Werror` locally.
+- **Spec review with the student → `docs/LANGUAGE.md` v1.0 final.** Accepted: main's result ignored, print returns 0, multi-parameter `fun`, optional `let` annotation, one comparison level, big literals are lexer errors, runtime error format, `--check`/`--tokens`, indented AST. Changed: **`%` and nested comments removed**, `!` kept. Examples 4 and 5 rewritten (5 now uses a `rem` helper), outputs recomputed by hand.
+- Commit rule: no `Co-Authored-By` trailers from now on (student's request; `.claude/rules/workflow.md`). Three pushed commits keep theirs; the student chose not to rewrite history.
 - Rewrote root `README.md`: what Anka/`fplc` is, a code sample, the pipeline in plain words, a status table, requirements (macOS + Ubuntu), build/run (current `--tokens` vs the planned CLI), tests, repository structure, workflow, credits.
 - Found: the GitHub repo is **PUBLIC**, against course policy. The student must make it private (`gh repo edit … --visibility private`).
 
@@ -25,9 +27,9 @@ Newest entry on top. One entry per working session, written by `/wrap-up`.
 
 **Next**
 1. Student: make the repo private, `make hooks`, push, and confirm the first CI run is green.
-2. Student reviews `docs/LANGUAGE.md` v1.0 draft (§12 checklist); then write `SPEC.md` v1 (≤ 2 pages) from it.
+2. Write `SPEC.md` v1 (≤ 2 pages) from `docs/LANGUAGE.md` v1.0; keep it as the LLM experiment baseline.
 2. Walking skeleton: `print_int(42)` through lexer → parser → AST → checker → `.ll` → clang → `42`.
-3. Phase 1: lexer update with columns, `parser.y`, AST, `--emit-ast`, recovery, tests.
+3. Walking skeleton `print_int(42)`, then Phase 1: lexer update with columns, `parser.y`, AST, `--emit-ast`, recovery, tests.
 
 ---
 

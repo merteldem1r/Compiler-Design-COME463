@@ -3,7 +3,7 @@
 > **Anka** is a small, strictly evaluated, statically typed **functional** language. Every construct is an expression, functions are values, and nothing is ever mutated. It compiles to LLVM IR with `fplc`.
 > Named after the phoenix of Turkish mythology: its compiler rises from errors (it reports them all and keeps going), and Anka v1.0 rose from the C-like Anka v0.2 of Project 1.
 
-**Status:** **v1.0 draft**, written 2026-11-27, **waiting for the student's review** (see §12). The source of truth for the final project. `SPEC.md` (root) is its ≤ 2-page summary.
+**Status:** **v1.0**, drafted and reviewed by the student on 2026-11-27 (review outcome in §12). The source of truth for the final project. `SPEC.md` (root) is its ≤ 2-page summary.
 **Compiler:** `fplc` · **Source files:** `*.fpl` · **Directive:** `projects/final-project/directives/final_project.md`
 **Previous version:** `projects/project-1/LANGUAGE-v0.2.md` (Project 1 lexer, C-like; frozen)
 
@@ -41,9 +41,10 @@ The shape a reader needs: **a program is a list of `fn` definitions**, one of wh
 | Kind | Syntax | Rule |
 |---|---|---|
 | Line | `// …` | Runs to the end of the line |
-| Block | `/* … */` | **Nests**: `/* a /* b */ c */` is one comment. May span lines |
+| Block | `/* … */` | May span lines. Does **not** nest: the first `*/` ends it, as in C |
 
 A `/*` without a matching `*/` is an error, reported at the position of the **opening** `/*`.
+Because comments don't nest, `/* a /* b */ c */` ends at the first `*/`, and ` c */` is read as code (`c`, `*`, `/`), which the parser then rejects.
 
 ### 2.3 Keywords (11, reserved, case-sensitive)
 
@@ -63,7 +64,7 @@ A `/*` without a matching `*/` is an error, reported at the position of the **op
 |---|---|---|---|
 | Identifier | `IDENT` | `[a-zA-Z_][a-zA-Z0-9_]*` | `x`, `is_prime`, `_`, `fx2` |
 | Integer literal | `INT_LIT` | `0\|[1-9][0-9]*` | `0`, `42`, `2147483647` |
-| Arithmetic | `PLUS` `MINUS` `STAR` `SLASH` `PERCENT` | `+` `-` `*` `/` `%` | `a % b` |
+| Arithmetic | `PLUS` `MINUS` `STAR` `SLASH` | `+` `-` `*` `/` | `n * fact(n - 1)` |
 | Comparison | `EQ` `NEQ` `LT` `LE` `GT` `GE` | `==` `!=` `<` `<=` `>` `>=` | `n <= 1` |
 | Logical | `AND` `OR` `NOT` | `&&` `\|\|` `!` | `!done && ok` |
 | Arrow | `ARROW` | `->` | `int -> int`, `fun (x: int) -> x` |
@@ -71,7 +72,7 @@ A `/*` without a matching `*/` is an error, reported at the position of the **op
 | Punctuation | `LPAREN` `RPAREN` `COMMA` `COLON` | `(` `)` `,` `:` | `f(a, b)` |
 | End of input | `END` (code 0, as Bison expects) | `<<EOF>>` | |
 
-That is 16 operators (7 of them two characters long: `==` `!=` `<=` `>=` `&&` `||` `->`) and 4 punctuation marks. `=` is called `EQUALS`, not `ASSIGN`, because Anka has no assignment: `=` only introduces a name.
+That is 15 operators (7 of them two characters long: `==` `!=` `<=` `>=` `&&` `||` `->`) and 4 punctuation marks. `=` is called `EQUALS`, not `ASSIGN`, because Anka has no assignment: `=` only introduces a name.
 
 Notes:
 - **No negative literals.** `-5` is `MINUS INT_LIT(5)`; the parser treats `-` as unary minus.
@@ -87,7 +88,7 @@ The lexer **reports, skips, and continues**. Every error uses the diagnostic for
 
 | Error | Example | Message (draft wording) |
 |---|---|---|
-| Unknown character | `x @ y`, `;`, `{` | `unexpected character '@'` |
+| Unknown character | `x @ y`, `%`, `;`, `{` | `unexpected character '@'` |
 | Non-ASCII byte | `ı` (2 bytes) | `unexpected byte '\xC4'` (one per byte) |
 | Leading zeros | `007` | `integer literal '007' has leading zeros` |
 | Too large | `3000000000` | `integer literal '3000000000' is too large (max 2147483647)` |
@@ -96,7 +97,7 @@ The lexer **reports, skips, and continues**. Every error uses the diagnostic for
 ### 2.7 What changed since v0.2 (Project 1)
 | Removed (forbidden by the final project: no mutation, no loops, int/bool only) | Added |
 |---|---|
-| `while` `for` `break` `continue` `return` `print` `float`, float and string literals, `=` as assignment, `+=` `-=` `*=` `/=`, `**`, `..`, `{` `}` `;` | `fun` `then`, built-in names `print_int`/`print_bool`, columns in every position, `int` range check |
+| `while` `for` `break` `continue` `return` `print` `float`, float and string literals, `=` as assignment, `+=` `-=` `*=` `/=`, `**`, `..`, `{` `}` `;`. Also, by the student's choice: `%` and nested block comments | `fun` `then`, built-in names `print_int`/`print_bool`, columns in every position, `int` range check |
 
 ---
 
@@ -123,7 +124,7 @@ or_expr   = and_expr { "||" and_expr } ;
 and_expr  = cmp_expr { "&&" cmp_expr } ;
 cmp_expr  = add_expr [ ( "==" | "!=" | "<" | "<=" | ">" | ">=" ) add_expr ] ;
 add_expr  = mul_expr { ( "+" | "-" ) mul_expr } ;
-mul_expr  = unary { ( "*" | "/" | "%" ) unary } ;
+mul_expr  = unary { ( "*" | "/" ) unary } ;
 unary     = ( "-" | "!" ) unary | call ;
 call      = atom { "(" [ args ] ")" } ;                         (* f(x), f(x)(y) *)
 args      = expr { "," expr } ;
@@ -141,7 +142,7 @@ This grammar is LALR(1) with **zero conflicts**. We checked it with Bison 3.8.2 
 | 3 | `&&` | left | `a \|\| b && c` → `a \|\| (b && c)` |
 | 4 | `==` `!=` `<` `<=` `>` `>=` | **none** (one comparison per level) | `a < b < c` is a syntax error; write `a < b && b < c` |
 | 5 | `+` `-` | left | `10 - 3 - 2` → `(10 - 3) - 2` = 5 |
-| 6 | `*` `/` `%` | left | `1 + 2 * 3` → `1 + (2 * 3)` |
+| 6 | `*` `/` | left | `1 + 2 * 3` → `1 + (2 * 3)`; `a / b * b` → `(a / b) * b` |
 | 7 | unary `-` `!` | right (prefix) | `-x * y` → `(-x) * y` |
 | 8 | call `f(…)` | left (postfix) | `-f(2)` → `-(f(2))`; `pick(b)(7)` → `(pick(b))(7)` |
 
@@ -178,7 +179,7 @@ T ::= int | bool | (T1, …, Tn) -> T
 | `x` | `: Γ(x)`; error if `x` is not in scope |
 | `-e` | `e : int` ⇒ `-e : int` |
 | `!e` | `e : bool` ⇒ `!e : bool` |
-| `e1 + e2` (also `-` `*` `/` `%`) | `e1 : int`, `e2 : int` ⇒ `int` |
+| `e1 + e2` (also `-` `*` `/`) | `e1 : int`, `e2 : int` ⇒ `int` |
 | `e1 < e2` (also `<=` `>` `>=`) | `e1 : int`, `e2 : int` ⇒ `bool` |
 | `e1 == e2` (also `!=`) | `e1 : T`, `e2 : T`, `T` is `int` or `bool` ⇒ `bool` (functions cannot be compared) |
 | `e1 && e2` (also `\|\|`) | `e1 : bool`, `e2 : bool` ⇒ `bool` |
@@ -221,8 +222,9 @@ fn add_to_all(k: int) -> int =
 - `if` evaluates the condition, then **only** the chosen branch.
 - `let` evaluates its value once; the name then stands for that value (immutable).
 - **Integers wrap** (two's complement, 32 bits): `2147483647 + 1` = `-2147483648`. Unary `-` wraps too.
-- `/` truncates toward zero (`-7 / 2` = `-3`); `%` takes the sign of the left operand (`-7 % 2` = `-1`). `-2147483648 / -1` = `-2147483648` (wraps) and `-2147483648 % -1` = `0`. In LLVM this case is undefined behaviour, so the compiler handles it explicitly.
-- **Division or remainder by zero** stops the program. It prints `<file>:<line>:<col>: runtime error: division by zero` to stderr (the position of the `/` or `%`) and exits with status **1**.
+- `/` truncates toward zero (`-7 / 2` = `-3`). `-2147483648 / -1` = `-2147483648` (it wraps). In LLVM this one case is undefined behaviour, so the compiler handles it explicitly.
+- There is no remainder operator. Write it with a helper: `fn rem(a: int, b: int) -> int = a - a / b * b` (same sign rule as C: `rem(-7, 2)` = `-1`).
+- **Division by zero** stops the program. It prints `<file>:<line>:<col>: runtime error: division by zero` to stderr (the position of the `/`) and exits with status **1**.
 - **No partial application:** a call always supplies every argument (checked statically).
 - Functions (top-level, built-in, or `fun`) are values: they can be passed, returned, bound by `let`, and chosen by `if`.
 - Deep recursion uses the machine stack (no tail-call elimination in the baseline).
@@ -361,19 +363,20 @@ fn main() -> int =
   print_int(pick(false)(7))                               // 7 * 10 = 70
 ```
 
-**Example 4: shadowing, precedence, a `let` annotation.** Output: `5` `-18`
+**Example 4: shadowing, precedence, a `let` annotation.** Output: `5` `-17`
 ```anka
 fn main() -> int =
   let x = 2 in
   let y: int = x + 3 * 4 in        // 2 + 12 = 14
   let x = x * 10 in                // a new x = 20; the old x is shadowed
   let _ = print_int(x - y - 1) in  // (20 - 14) - 1 = 5
-  print_int(-x + y % 4)            // -20 + 2 = -18
+  print_int(-x + y / 4)            // -20 + 3 = -17  (unary minus first, 14 / 4 = 3)
 ```
 
-**Example 5: gcd with `%`, short-circuit guarding a division.** Output: `6` `false` `true`
+**Example 5: gcd with a remainder helper, short-circuit guarding a division.** Output: `6` `false` `true`
 ```anka
-fn gcd(a: int, b: int) -> int = if b == 0 then a else gcd(b, a % b)
+fn rem(a: int, b: int) -> int = a - a / b * b       // Anka has no %: 48 - 2 * 18 = 12
+fn gcd(a: int, b: int) -> int = if b == 0 then a else gcd(b, rem(a, b))
 fn big_ratio(a: int, b: int) -> bool = b != 0 && a / b > 10
 
 fn main() -> int =
@@ -399,21 +402,25 @@ fn main() -> int =
 5. **Built-ins are ordinary names, not keywords.** *Rejected:* Project 1's `print` keyword. As names, `print_int` and `print_bool` get their types from the same rules as user functions, and they can be passed as values.
 6. **No statement separator `;`.** Sequencing is `let _ = e1 in e2`. *Kept out on purpose, for now:* it is the most likely thing an LLM will get wrong, which makes it a candidate for the "change one thing" step of the LLM experiment (with a better `unexpected character ';'` message as the other candidate).
 
+7. **A smaller language than v0.2: no `%`, no nested comments** (the student's choice in the review). *Rejected:* keeping them as cheap extras. Fewer operators make a smaller lexer, grammar and code generator (no `srem`, no comment-depth counter). The cost is measurable: if the LLM keeps writing `%` for gcd or is_prime, that is evidence for the experiment's "change one thing" step.
+
 **For humans and LLMs:** a small and regular grammar (11 keywords, one way to write each idea); explicit types at every function boundary; familiar call syntax; diagnostics that state the position, what was expected, what was found, and a fix.
 
 ---
 
-## 12. Review checklist (student, before Phase 1 code)
+## 12. Review outcome (student, 2026-11-27)
 
-The AI drafted these choices. Confirm or change each one; then v1.0 is final and `SPEC.md` is written from it.
+The AI drafted these choices; the student decided each one.
 
-- [ ] `fn main() -> int` is required, and its result is ignored (exit 0). *Alternative:* use the result as the exit code.
-- [ ] `print_int` / `print_bool` return `0`. *Alternative:* return the argument (only works for `print_int`).
-- [ ] Lambdas may take any number of parameters (`fun (a: int, b: int) -> a + b`), the same as `fn`. The directive only requires one.
-- [ ] Optional `let` annotation `let x: int = …`.
-- [ ] One non-associative comparison level (`a < b < c` is an error), as in the directive's grammar. v0.2 had two levels.
-- [ ] Keep `%`, `!`, nested comments (not required, but cheap and useful for gcd / is_prime).
-- [ ] Integer literals above 2147483647 are a lexical error.
-- [ ] Runtime error format `file:line:col: runtime error: division by zero`, exit status 1.
-- [ ] `--check` and `--tokens` as extra modes besides the required `--emit-ast` / `--emit-ll`.
-- [ ] AST dump format of §9 (indented tree, not S-expressions).
+| Question | Decision |
+|---|---|
+| What happens to `main`'s result? | **Ignored**; the program exits with 0 (rejected: using it as the exit code) |
+| What do `print_int` / `print_bool` return? | **`0`** (rejected: `print_int` returns its argument) |
+| How many parameters may a `fun` take? | **Any number**, like `fn` (rejected: exactly one) |
+| `let` annotation? | **Optional**, `let x: int = …`, checked (rejected: none) |
+| Comparisons | **One non-associative level**: `a < b < c` is an error |
+| `%`, `!`, nested comments | **Keep `!`; remove `%` and nested comments** (§11 decision 7) |
+| Integer literals above 2147483647 | **Lexical error** |
+| Runtime error | **`file:line:col: runtime error: division by zero`**, exit status 1 |
+| Extra CLI modes | **`--check` and `--tokens`** besides `--emit-ast` / `--emit-ll` |
+| AST dump | **Indented tree** (§9; rejected: S-expressions) |
