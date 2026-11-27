@@ -24,6 +24,7 @@ Newest entry on top. One entry per working session, written by `/wrap-up`.
 - Spec bug: the directive's `{ def } expr` program shape gives 3 shift/reduce conflicts with C-style calls (`(` and `-` after a function body). Fixed by requiring `fn main() -> int`; 0 conflicts.
 - Draft errors caught by re-checking by hand before saving: example 6's column (said 20, really 16, verified with `awk index`); the 2-char operator count (said 6, really 7).
 - Tooling: LLVM 23 rejects the directive's `opt -verify` ("the `opt -passname` syntax … is not supported"). Use `opt -passes=verify -disable-output`.
+- CI: run 46038832325 (commit `a9cfaa7`) failed in the **gcc** job's install step, before any of our code ran. `packages.microsoft.com`, a third-party apt source preinstalled on GitHub's Ubuntu image, answered `403 Forbidden`, so `apt-get update` exited 100 although the Ubuntu lists had downloaded; the clang job on another machine passed. Fix: `apt-get update` only warns, and `apt-get install` still fails the job if a package is really missing. Also bumped `actions/checkout@v4` → `@v5` (Node 20 deprecation warning; v5 runs on Node 24).
 - Tooling, open: clang warns `overriding the module target triple … [-Woverride-module]` when linking our `.ll`. To be decided in Phase 3.
 
 **Next**

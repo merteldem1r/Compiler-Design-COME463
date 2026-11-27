@@ -25,7 +25,7 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 0      # full history, so the pushed range can be listed
 
@@ -67,11 +67,15 @@ jobs:
       matrix:
         cc: [gcc, clang]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Install Flex, Bison, LLVM, clang
         run: |
-          sudo apt-get update
+          # The runner image also lists third-party package sources (e.g. packages.microsoft.com).
+          # If one of them is down, `apt-get update` exits non-zero even though the Ubuntu lists,
+          # the only ones we need, were downloaded. So we only warn here; if a package we need is
+          # really missing, the install line below still fails the job.
+          sudo apt-get update || echo "::warning::apt-get update reported errors (a third-party source?); continuing"
           sudo apt-get install -y --no-install-recommends flex bison llvm clang
 
       - name: Tool versions
