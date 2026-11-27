@@ -52,33 +52,23 @@ fn main() -> int =                                   // the program runs main()
 
 ## How the compiler works
 
-```mermaid
-flowchart LR
-    src(["prog.fpl"])
-
-    subgraph p1 ["Phase 1 · Front end"]
-        direction LR
-        lex["Lexer<br/>Flex"]
-        par["Parser<br/>Bison"]
-        lex -- tokens --> par
-    end
-
-    subgraph p2 ["Phase 2 · Analysis"]
-        chk["Type checker<br/>symbol table"]
-    end
-
-    subgraph p3 ["Phase 3 · Back end"]
-        direction LR
-        gen["Code generator"]
-        ll(["prog.ll<br/>LLVM IR"])
-        exe(["native program"])
-        gen --> ll
-        ll -- "clang + runtime.c" --> exe
-    end
-
-    src --> lex
-    par -- AST --> chk
-    chk -- "typed AST" --> gen
+```text
+prog.fpl
+   │   Lexer (Flex)             Phase 1
+   ▼
+tokens
+   │   Parser (Bison)           Phase 1
+   ▼
+AST
+   │   Type checker             Phase 2
+   ▼
+checked AST
+   │   Code generator           Phase 3
+   ▼
+prog.ll  (LLVM IR)
+   │   clang + runtime.c
+   ▼
+./prog
 ```
 
 | Stage | Source | Turns … into … | Look at it with |
@@ -105,25 +95,7 @@ prog.fpl:3:14: error: condition of 'if': expected bool, found int
 | Phase 3: LLVM code generation, runtime, full test suite | Planned |
 | Report, LLM experiment, demo | Planned |
 
-```mermaid
-gantt
-    title Final project plan
-    dateFormat YYYY-MM-DD
-    axisFormat %d %b
-    section Setup
-    Spec v1.0, repo, CI            :done,   s1, 2026-11-27, 1d
-    SPEC.md, walking skeleton      :        s2, 2026-11-28, 2d
-    section Compiler
-    Phase 1 parser and AST         :        c1, 2026-11-30, 3d
-    Phase 2 type checker           :        c2, 2026-12-03, 4d
-    Phase 3 code generation        :        c3, 2026-12-07, 4d
-    section Report
-    LLM experiment and BPE         :        r1, 2026-12-10, 3d
-    Report and submission          :        r2, 2026-12-12, 2d
-    Demo                           :milestone, d1, 2026-12-15, 0d
-```
-
-The detailed checklist and the decisions log are in [`docs/PLAN.md`](docs/PLAN.md).
+The schedule, the detailed checklist and the decisions log are in [`docs/PLAN.md`](docs/PLAN.md).
 
 ## Getting started
 
