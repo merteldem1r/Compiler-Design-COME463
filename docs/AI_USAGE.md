@@ -21,6 +21,7 @@ Course policy: AI use must be acknowledged in every report, with **2–3 prompts
 | 2026-11-27 | Final | Rewrote the root README (purpose, pipeline, status, requirements, build/run, tests, structure, workflow) | P-18 | No error caught. The README keeps the current state (`fplc --tokens`, the P1 token dumper) separate from the planned CLI, so it doesn't claim features that don't exist yet |
 | 2026-11-27 | Final | Ran the spec review as three rounds of multiple-choice questions (10 choices, each with the trade-off explained), then applied the answers to LANGUAGE.md and PLAN.md | P-19, P-20 | (1) The AI had suggested commit commands with a `Co-Authored-By` trailer; the student asked to drop it, and the rule is now in `workflow.md`. (2) The draft had bundled three features into one review item (`%`, `!`, nested comments), so the student's "no" was ambiguous; a follow-up question separated them |
 | 2026-11-27 | Final | Diagnosed a failed CI run from its log (`gh run view --log-failed`) and made the workflow's apt step tolerant of third-party mirror outages; bumped `actions/checkout` | P-21 | The AI's original workflow had `apt-get update` fail the job on any source error, including sources we don't use. Not foreseen; fixed after the first real outage |
+| 2026-11-27 | Final | Redesigned the README with Mermaid diagrams, badges and note boxes; removed emojis repo-wide and wrote the no-emoji rule | P-22 | The AI itself had put emojis into the README, ROADMAP and PLAN status columns, and its text-art pipeline diagram overflowed the GitHub code box (the student's screenshot). Replaced by a Mermaid flowchart, checked by rendering it locally |
 
 ## Prompts (verbatim)
 
@@ -86,3 +87,6 @@ Course policy: AI use must be acknowledged in every report, with **2–3 prompts
 
 **P-21 (2026-11-27):**
 > my previoius push failed on the ci stage, please could you review what is the problem?
+
+**P-22 (2026-11-27):**
+> could you make the repo a bit more visually good looking, for instance that [screenshot] flow you can rewrite that in more visually good looking way, also don't use any kind of emojies on the readme.md or any kind of docuemnt please, add that rule please

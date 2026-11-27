@@ -19,6 +19,7 @@ Sessions don't share memory, but the repo does. Keep these files current so any 
 | `docs/ROADMAP.md` | A milestone ships or the semester plan changes | Milestone status |
 
 ## Conventions
+- **No emojis or pictographic symbols anywhere** (the student's rule, 2026-11-27): not in `README.md`, docs, reports, HTML pages, code comments, test files or commit messages. That includes check marks, crosses, hourglasses, stars, warning signs and similar (`✅ ❌ ✓ ⏳ 🔜 ★ ⚠️`). Use words instead: "Done", "Planned", "In progress", "Note:", "Warning:". Typographic characters are fine (`→ ≤ · — ⇒ Γ`), and so are GitHub's `> [!NOTE]` boxes, Mermaid diagrams and badges. Exception: read-only material (`docs/lectures-notes/`, `projects/*/directives/`) stays verbatim.
 - Dates are absolute (`2026-10-14`), never "yesterday" or "next week".
 - **Bugs hit** entries matter: project reports require concrete bugs (what failed, why, fix).
 - When a milestone is submitted, summarize it in `ROADMAP.md` and rewrite `PLAN.md` for the next milestone.

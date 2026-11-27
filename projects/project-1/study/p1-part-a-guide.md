@@ -148,7 +148,7 @@ Each state remembers **how much of `w` you have just matched**. On a wrong symbo
 ### Technique 3: "does NOT contain w" (complement)
 Take a **complete DFA** for "contains w" and **swap** accepting and non-accepting states. For "does not contain `abb`": accept {0, 1, 2}, and 3 becomes a dead state.
 
-⚠️ This only works on a **DFA with every transition present**. If you swap the states of an NFA, the result is wrong. In the NFA above, the swapped version would still accept `abb` by staying in state 0.
+**Warning:** this only works on a **DFA with every transition present**. If you swap the states of an NFA, the result is wrong. In the NFA above, the swapped version would still accept `abb` by staying in state 0.
 
 ### Technique 4: counting modulo m
 "The number of `a`s mod 3" needs 3 states, labeled 0, 1, 2. Reading an `a` moves to the next state (2 → 0 wraps around), and other symbols loop in place.
@@ -179,7 +179,7 @@ Worked example: **even length AND contains at least one `b`**, over {a, b}. DFA 
 | *(E,Y) | (O,Y) | (O,Y) |
 | (O,Y) | (E,Y) | (E,Y) |
 
-Check: `ab` goes (E,N) → (O,N) → (E,Y), accepted ✓. `aa` ends in (E,N), rejected ✓. `b` ends in (O,Y), rejected ✓.
+Check: `ab` goes (E,N) → (O,N) → (E,Y), accepted. `aa` ends in (E,N), rejected. `b` ends in (O,Y), rejected.
 
 Tip for A2: decide which techniques each language needs before drawing anything. One language may need two of them combined.
 
@@ -244,7 +244,7 @@ Final NFA (10 states):
                 └──ε──► 7 ──c──► 8 ──ε──────────────────────────────────────┘
 ```
 
-**Self-check by counting states:** every symbol adds 2 states, every `*` adds 2, every `|` adds 2, and concatenation adds 0. Here that gives a, b, c (6) + one star (2) + one union (2) = **10** ✓. Count the same way for your own answers.
+**Self-check by counting states:** every symbol adds 2 states, every `*` adds 2, every `|` adds 2, and concatenation adds 0. Here that gives a, b, c (6) + one star (2) + one union (2) = **10**. Count the same way for your own answers.
 
 **How to present it** (FAQ: "show base cases, combination, final NFA"): draw each base piece, then each combination step with its new states labeled, then the final NFA. One small drawing per step is clearer than one big crowded drawing.
 
@@ -289,7 +289,7 @@ NFA over {a, b}, start 0, accept {2}: δ(0,a) = {0,1}, δ(0,b) = {0}, δ(1,a) = 
 | *C | {0,1,2} | {0,1}∪{2}∪∅ = C | {0}∪{2}∪∅ = D | **yes** (contains 2) |
 | *D | {0,2} | {0,1}∪∅ = B | {0}∪∅ = A | **yes** (contains 2) |
 
-Check with strings: `ab` goes A→B→D, accepted ✓. `ba` goes A→A→B, rejected ✓.
+Check with strings: `ab` goes A→B→D, accepted. `ba` goes A→A→B, rejected.
 
 Then **draw** the final DFA, with states A–D, start arrow, double circles and all arrows. The question asks for the named subsets, the complete table, the accepting states and the diagram, so include all four.
 

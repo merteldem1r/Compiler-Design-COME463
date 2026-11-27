@@ -28,7 +28,7 @@ Interface fixed by the directive: `./fplc prog.fpl --emit-ast`, `./fplc prog.fpl
 
 | Dates | Work | Phase |
 |---|---|---|
-| Fri 11-27 | Analysis ✅ · toolchain ✅ · repo reorganized, P1 frozen ✅ | — |
+| Fri 11-27 | Done: analysis, toolchain, repo reorganized and P1 frozen, CI, spec v1.0 | — |
 | Sat 11-28 – Sun 11-29 | `docs/LANGUAGE.md` v1.0 (student review) → `SPEC.md` v1 · **walking skeleton**: `print_int(42)` through lexer → parser → AST → checker → `.ll` → clang → `42` | setup |
 | Mon 11-30 – Wed 12-02 | Lexer update (new tokens, columns), `parser.y`, AST, `--emit-ast`, panic-mode recovery, syntax-error + recovery tests | 1 |
 | Thu 12-03 – Sun 12-06 | Type checker + type-error and recovery tests | 2 |
