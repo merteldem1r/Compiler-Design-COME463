@@ -21,7 +21,9 @@ The root mirrors the final-project deliverable (`README.md`, `SPEC.md`, `src/`, 
 ```
 CLAUDE.md                    this file: orientation only
 README.md                    human-facing intro; becomes the deliverable README (author, path, LLVM version, build/run)
-Makefile                     make · make tools · make clean (grows each phase)
+Makefile                     make · make tools · make hooks · make clean (grows each phase)
+.githooks/commit-msg         commit-message check (type prefix, ≤ 72 chars, imperative); enable with `make hooks`
+.github/workflows/ci.yml     CI on push/PR: commit messages, gcc + clang -Werror build, P1 tests, run_tests.sh
 src/                         the compiler: lexer.l now; parser.y, ast, check, codegen, main.c to come
 tests/                       (to come) valid/ errors/ recovery/: X.fpl + X.expected
 .claude/
@@ -57,7 +59,8 @@ projects/
 - **C11 + Flex 2.6 + Bison 3.8 (Homebrew)**, emitting LLVM IR as text; **LLVM/clang 23 (Homebrew)** for `opt` and linking. Both Homebrew packages are keg-only (not on PATH); the Makefile finds them under `/opt/homebrew/opt/`. Must also build with `gcc` on Linux.
 - Verify IR with `opt -passes=verify -disable-output x.ll` (LLVM 23 rejects the old `opt -verify`).
 - Python in `.venv/` only for side tools (tiktoken BPE comparison).
-- Commands: `make` (build `build/fplc`) · `make tools` (versions). Planned: `./run_tests.sh` (all tests), `make package`.
+- Commands: `make` (build `build/fplc`) · `make tools` (versions) · `make hooks` (once per clone). Planned: `./run_tests.sh` (all tests), `make package`.
+- CI (GitHub Actions, Ubuntu 24.04 = the grading OS, apt LLVM 18) must stay green; it runs `./run_tests.sh` automatically once that file exists. Keep emitted IR valid for LLVM 18 as well as 23.
 
 ## References
 

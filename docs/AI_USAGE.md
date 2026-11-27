@@ -17,6 +17,7 @@ Course policy: AI use must be acknowledged in every report, with **2–3 prompts
 
 | 2026-11-27 | Final | Analyzed the final-project directive vs the repo (keep vs restart, gaps, risks, schedule); checked the new toolchain; reorganized the repo (P1 frozen, root = final project); rewrote PLAN/ROADMAP/CLAUDE.md/rules; rebuilt two missing session-log entries | P-14, P-15 | No wrong output caught so far. Note: the directive's `opt -verify` fails on LLVM 23; found by running it, not assumed. Uses `opt -passes=verify` |
 | 2026-11-27 | Final | Drafted `docs/LANGUAGE.md` v1.0; tested two grammar variants in Bison first | P-16 | (1) The AI's first grammar plan (`{ fndef } expr`, as in the directive) had 3 shift/reduce conflicts. Found by running Bison, not by reasoning; switched to a required `fn main`. (2) In the draft, example 6's error column was wrong (20 → 16) and the count of 2-char operators was wrong (6 → 7). Both caught by re-checking by hand before handing the draft over |
+| 2026-11-27 | Final | Wrote the commit-msg hook, `make hooks`, and the GitHub Actions CI workflow; noticed the repo is public | P-17 | Not an error, but a limitation: the imperative-mood check is a simple "first word ends in -ed" rule with a small list of exceptions (`embed`, `need`, …), so it can miss things or flag a rare real word |
 
 ## Prompts (verbatim)
 
@@ -67,3 +68,6 @@ Course policy: AI use must be acknowledged in every report, with **2–3 prompts
 
 **P-16 (2026-11-27):**
 > yes go ahead, draft the LANGUAGE.md v1.0 spec
+
+**P-17 (2026-11-27):**
+> could you please before that add the commit message git hook that checks the commit messages locally, then add the simple ci workflow, so we make the project a bit more professional

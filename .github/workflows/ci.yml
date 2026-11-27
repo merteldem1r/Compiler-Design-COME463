@@ -1,0 +1,94 @@
+# CI: on every push to main and every pull request, GitHub starts a fresh Ubuntu machine and
+#   1. checks the messages of the newly pushed commits (same script as the local hook),
+#   2. builds fplc with gcc AND clang, treating every warning as an error,
+#   3. runs the frozen Project 1 lexer tests and, once it exists, ./run_tests.sh.
+# Ubuntu + gcc is the grading environment, so this catches "works on my Mac only" bugs.
+
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:          # a "Run workflow" button in the Actions tab
+
+permissions:
+  contents: read              # the jobs only read the code
+
+concurrency:                  # a newer push cancels the older, still-running check
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  commit-messages:
+    name: commit messages
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0      # full history, so the pushed range can be listed
+
+      - name: Check the pushed commits with .githooks/commit-msg
+        env:
+          EVENT: ${{ github.event_name }}
+          BEFORE: ${{ github.event.before }}
+          AFTER: ${{ github.sha }}
+          PR_BASE: ${{ github.event.pull_request.base.sha }}
+          PR_HEAD: ${{ github.event.pull_request.head.sha }}
+        run: |
+          # Only NEW commits are checked; older history is left as it is.
+          if [ "$EVENT" = pull_request ]; then
+            range="$PR_BASE..$PR_HEAD"
+          elif [ -n "$BEFORE" ] && git cat-file -e "$BEFORE^{commit}" 2>/dev/null; then
+            range="$BEFORE..$AFTER"
+          else
+            range="$AFTER~1..$AFTER"   # manual run or new branch: just the newest commit
+          fi
+          echo "checking $range"
+          status=0
+          for c in $(git rev-list --no-merges "$range"); do
+            git log -1 --format=%B "$c" > "$RUNNER_TEMP/msg"
+            if sh .githooks/commit-msg "$RUNNER_TEMP/msg"; then
+              echo "ok    $(git log -1 --format='%h %s' "$c")"
+            else
+              echo "FAIL  $(git log -1 --format='%h %s' "$c")"
+              status=1
+            fi
+          done
+          exit $status
+
+  build:
+    name: build and test (${{ matrix.cc }})
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false        # show the gcc AND the clang result, even if one fails
+      matrix:
+        cc: [gcc, clang]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Flex, Bison, LLVM, clang
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends flex bison llvm clang
+
+      - name: Tool versions
+        run: |
+          make tools
+          ${{ matrix.cc }} --version | head -1
+
+      - name: Build fplc (warnings are errors)
+        run: make CC=${{ matrix.cc }} EXTRA_CFLAGS=-Werror
+
+      - name: Project 1 lexer tests (frozen snapshot)
+        run: make -C projects/project-1/code CC=${{ matrix.cc }} test
+
+      - name: Final-project tests
+        run: |
+          if [ -x run_tests.sh ]; then
+            ./run_tests.sh
+          else
+            echo "run_tests.sh does not exist yet (Phase 3); nothing to run"
+          fi

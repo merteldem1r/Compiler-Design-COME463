@@ -42,6 +42,8 @@ Interface fixed by the directive: `./fplc prog.fpl --emit-ast`, `./fplc prog.fpl
 ### Setup
 - [x] Toolchain: `brew install bison llvm`; checked a hand-written `.ll` with `opt -passes=verify`, linked with clang, it printed `120` (2026-11-27)
 - [x] Repo reorganized: P1 frozen in `projects/project-1/code/` (still 8/8), root = final project (2026-11-27)
+- [x] `.githooks/commit-msg` + `make hooks`; `.github/workflows/ci.yml` (commit messages, gcc + clang `-Werror`, P1 tests, `run_tests.sh` when it exists) (2026-11-27)
+- [ ] **Student:** make the GitHub repo private (it is PUBLIC; course policy forbids posting solutions), run `make hooks`, push, and check that the first CI run is green
 - [x] `docs/LANGUAGE.md` v1.0 **draft**: tokens, grammar (Bison-checked, 0 conflicts), precedence, type rules, semantics, CLI, messages, AST dump, 6 examples with hand-computed output, design decisions (2026-11-27)
 - [ ] **Student reviews** `docs/LANGUAGE.md` §12 checklist → v1.0 final
 - [ ] `SPEC.md` v1 (≤ 2 pages, 5+ example programs), made from LANGUAGE.md. Keep v1 forever: it is the LLM experiment's baseline
@@ -108,4 +110,6 @@ Interface fixed by the directive: `./fplc prog.fpl --emit-ast`, `./fplc prog.fpl
 | 2026-11-27 | Top-level functions start with `fn`, local bindings are `let … in`; a program is `{ fn-def } expr` | The parser knows from the first token whether it sees a definition or the main expression |
 | 2026-11-27 | Source extension `.fpl`, binary `fplc` | Matches the professor's fixed CLI and test harness |
 | 2026-11-27 | P1 frozen as a buildable snapshot in `projects/project-1/code/`; the root `src/lexer.l` is the copy that evolves | P1 stays reproducible; `git diff` shows how the lexer changed for the final project |
+| 2026-11-27 | Commit-message hook in a tracked `.githooks/` (enabled by `make hooks`), and the same script in CI, which checks only newly pushed commits | `.git/hooks/` is not versioned. One script means the local and CI rules can't drift. Old commits (`last updates`, `testing with own .anka code`) are history and are not rewritten |
+| 2026-11-27 | CI on GitHub Actions, Ubuntu 24.04, gcc + clang with `-Werror` | Linux + gcc is the grading environment; apt's LLVM 18 also checks that our IR isn't tied to LLVM 23 |
 | 2026-11-27 | Verify IR with `opt -passes=verify -disable-output` | LLVM 23 rejects the directive's `opt -verify` (old pass-manager syntax). Same check, new spelling |
