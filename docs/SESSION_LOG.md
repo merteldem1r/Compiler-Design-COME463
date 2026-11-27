@@ -14,6 +14,7 @@ Newest entry on top. One entry per working session, written by `/wrap-up`.
 - Rewrote `docs/PLAN.md` (final-project schedule, checklist per phase, decisions) and `docs/ROADMAP.md`; updated `CLAUDE.md`, `.claude/rules/c-flex.md` (diagnostics, Bison, LLVM, new test layout), `docs-and-memory.md`, the `/wrap-up` skill.
 - Drafted `docs/LANGUAGE.md` **v1.0** (functional Anka): 11 keywords, 16 operators, EBNF grammar, precedence table, type rules, scopes/capture, semantics (wrapping, `INT_MIN / -1`, div-by-zero), CLI, diagnostic catalog, AST dump format, 6 example programs with hand-computed output, 6 design decisions, §12 review checklist. Grammar checked in Bison before writing it.
 - `.githooks/commit-msg` (type prefix, ≤ 72 chars, no period, imperative, blank line 2), `make hooks`, and `.github/workflows/ci.yml` (commit-message job + gcc/clang `-Werror` build matrix + P1 tests + `run_tests.sh` when present). Hook tested on 13 sample messages and the real history; both compilers build with `-Werror` locally.
+- Rewrote root `README.md`: what Anka/`fplc` is, a code sample, the pipeline in plain words, a status table, requirements (macOS + Ubuntu), build/run (current `--tokens` vs the planned CLI), tests, repository structure, workflow, credits.
 - Found: the GitHub repo is **PUBLIC**, against course policy. The student must make it private (`gh repo edit … --visibility private`).
 
 **Bugs hit**

@@ -82,7 +82,8 @@ Interface fixed by the directive: `./fplc prog.fpl --emit-ast`, `./fplc prog.fpl
 - [ ] LLM experiment: 10 small tasks (2 use function values); a **fresh** LLM chat that sees only `SPEC.md`, one task at a time; record compiles / correct / error category; feed our error message back once; change one thing in spec/grammar/messages; re-measure
 - [ ] BPE (tiktoken) counts of our examples vs equivalent Python and OCaml
 - [ ] `REPORT.pdf` (3 pages): design (3 decisions + rejected alternatives, humans + LLMs), architecture + recovery + **3 real bugs** + test counts, LLM results + the change + conclusion; AI disclosure (2–3 prompts verbatim, one AI mistake)
-- [ ] `README.md`: author, path, LLVM version, build/run instructions
+- [x] `README.md` first version: purpose, language taste, pipeline, status, requirements, build/run, tests, structure, workflow (2026-11-27)
+- [ ] `README.md` final: update status, the real CLI, test counts and LLVM version at submission
 - [ ] `make package` + dry run from an empty folder (clang; gcc check if possible) · submit · `git tag final-submission`
 - [ ] Demo: one slide, valid program → output, errors → diagnostics, AST/IR dump, hardest bug, LLM results
 
