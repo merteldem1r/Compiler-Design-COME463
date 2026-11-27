@@ -16,6 +16,7 @@ Course policy: AI use must be acknowledged in every report, with **2–3 prompts
 | 2026-10-16 | P1 | Rewrote REPORT.html in plainer first-person language; kept the student's own test file as C34 (header + expected output), regenerated BPE results, updated counts in README/PLAN/walkthrough | P-13 | (1) The first plain-language rewrite came out at 4 pages, over the 2-page limit; trimmed sentences until it fit 2 pages, checked by rendering the PDF. (2) Not an AI error but caught here: the student's commit `1fb7bd0` added a test without an expected output, so `make test` (and therefore `make package-p1`) failed 7/1 and the report's BPE numbers were stale |
 
 | 2026-11-27 | Final | Analyzed the final-project directive vs the repo (keep vs restart, gaps, risks, schedule); checked the new toolchain; reorganized the repo (P1 frozen, root = final project); rewrote PLAN/ROADMAP/CLAUDE.md/rules; rebuilt two missing session-log entries | P-14, P-15 | No wrong output caught so far. Note: the directive's `opt -verify` fails on LLVM 23; found by running it, not assumed. Uses `opt -passes=verify` |
+| 2026-11-27 | Final | Drafted `docs/LANGUAGE.md` v1.0; tested two grammar variants in Bison first | P-16 | (1) The AI's first grammar plan (`{ fndef } expr`, as in the directive) had 3 shift/reduce conflicts. Found by running Bison, not by reasoning; switched to a required `fn main`. (2) In the draft, example 6's error column was wrong (20 → 16) and the count of 2-char operators was wrong (6 → 7). Both caught by re-checking by hand before handing the draft over |
 
 ## Prompts (verbatim)
 
@@ -63,3 +64,6 @@ Course policy: AI use must be acknowledged in every report, with **2–3 prompts
 
 **P-15 (2026-11-27):**
 > 1. yes the p1 one submitted and done 2. solo is confirmed, I'm gonna present the project at the 15 December, so we have a lot of time, 3. c-style calls is okay 4. your reccommendation, also I want to tell you that we can move the project 1 one the separate folder, I guess this is already done, so now we gonna treat that repo as the code for the final project, with complete simple compiler that works, so you can organize the repo if right now it's messy a bit
+
+**P-16 (2026-11-27):**
+> yes go ahead, draft the LANGUAGE.md v1.0 spec

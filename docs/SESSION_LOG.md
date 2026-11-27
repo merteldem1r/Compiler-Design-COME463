@@ -12,13 +12,16 @@ Newest entry on top. One entry per working session, written by `/wrap-up`.
 - Toolchain: student ran `brew install bison llvm` → Bison 3.8.2, LLVM/clang 23.1.6 (both keg-only). Checked with a hand-written `fact.ll` + C runtime: `opt -passes=verify` OK, clang links it, prints `120`.
 - Repo reorganized: P1 code + 34-case tests frozen in `projects/project-1/code/` (own Makefile, still 8/8 PASS, CRLF test file kept via `.gitattributes`); `docs/study/` → `projects/project-1/study/`; `docs/LANGUAGE.md` v0.2 → `projects/project-1/LANGUAGE-v0.2.md`; directive → `projects/final-project/directives/`. New root `Makefile` builds `build/fplc` warning-free and finds the Homebrew tools (`make tools`).
 - Rewrote `docs/PLAN.md` (final-project schedule, checklist per phase, decisions) and `docs/ROADMAP.md`; updated `CLAUDE.md`, `.claude/rules/c-flex.md` (diagnostics, Bison, LLVM, new test layout), `docs-and-memory.md`, the `/wrap-up` skill.
+- Drafted `docs/LANGUAGE.md` **v1.0** (functional Anka): 11 keywords, 16 operators, EBNF grammar, precedence table, type rules, scopes/capture, semantics (wrapping, `INT_MIN / -1`, div-by-zero), CLI, diagnostic catalog, AST dump format, 6 example programs with hand-computed output, 6 design decisions, §12 review checklist. Grammar checked in Bison before writing it.
 
 **Bugs hit**
+- Spec bug: the directive's `{ def } expr` program shape gives 3 shift/reduce conflicts with C-style calls (`(` and `-` after a function body). Fixed by requiring `fn main() -> int`; 0 conflicts.
+- Draft errors caught by re-checking by hand before saving: example 6's column (said 20, really 16, verified with `awk index`); the 2-char operator count (said 6, really 7).
 - Tooling: LLVM 23 rejects the directive's `opt -verify` ("the `opt -passname` syntax … is not supported"). Use `opt -passes=verify -disable-output`.
 - Tooling, open: clang warns `overriding the module target triple … [-Woverride-module]` when linking our `.ll`. To be decided in Phase 3.
 
 **Next**
-1. Write `docs/LANGUAGE.md` v1.0 (functional Anka: tokens, grammar, precedence, type rules, semantics, error messages, AST dump format); student reviews it; then `SPEC.md` v1.
+1. Student reviews `docs/LANGUAGE.md` v1.0 draft (§12 checklist); then write `SPEC.md` v1 (≤ 2 pages) from it.
 2. Walking skeleton: `print_int(42)` through lexer → parser → AST → checker → `.ll` → clang → `42`.
 3. Phase 1: lexer update with columns, `parser.y`, AST, `--emit-ast`, recovery, tests.
 

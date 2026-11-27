@@ -42,7 +42,8 @@ Interface fixed by the directive: `./fplc prog.fpl --emit-ast`, `./fplc prog.fpl
 ### Setup
 - [x] Toolchain: `brew install bison llvm`; checked a hand-written `.ll` with `opt -passes=verify`, linked with clang, it printed `120` (2026-11-27)
 - [x] Repo reorganized: P1 frozen in `projects/project-1/code/` (still 8/8), root = final project (2026-11-27)
-- [ ] `docs/LANGUAGE.md` v1.0: tokens, grammar, precedence, type rules, semantics, error messages, AST dump format. **Student reviews**
+- [x] `docs/LANGUAGE.md` v1.0 **draft**: tokens, grammar (Bison-checked, 0 conflicts), precedence, type rules, semantics, CLI, messages, AST dump, 6 examples with hand-computed output, design decisions (2026-11-27)
+- [ ] **Student reviews** `docs/LANGUAGE.md` §12 checklist → v1.0 final
 - [ ] `SPEC.md` v1 (≤ 2 pages, 5+ example programs), made from LANGUAGE.md. Keep v1 forever: it is the LLM experiment's baseline
 - [ ] Walking skeleton `print_int(42)` end to end
 
@@ -87,7 +88,7 @@ Interface fixed by the directive: `./fplc prog.fpl --emit-ast`, `./fplc prog.fpl
 
 | Date | What failed | Why | Fix |
 |---|---|---|---|
-| | | | |
+| 2026-11-27 | **Spec bug:** the directive-style program shape `{ fndef } expr` gave Bison **3 shift/reduce conflicts** (on `(` and `-`) | With C-style calls, after `fn f() -> int = g` the next token `(5)` or `-5` can continue the body (`g(5)`, `g - 5`) *or* start the main expression. Bison's default (shift) would silently glue them | Program = only `fn` definitions + required `fn main() -> int`. Same grammar → 0 conflicts (checked with Bison 3.8.2, `-Wcounterexamples`). LANGUAGE.md §11 decision 3 |
 
 ## Open questions
 - [ ] Exact submission date and format (Classroom zip?) for "end of week 14"
