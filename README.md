@@ -52,23 +52,33 @@ fn main() -> int =                                   // the program runs main()
 
 ## How the compiler works
 
-```text
-prog.fpl
-   │   Lexer (Flex)             Phase 1
-   ▼
-tokens
-   │   Parser (Bison)           Phase 1
-   ▼
-AST
-   │   Type checker             Phase 2
-   ▼
-checked AST
-   │   Code generator           Phase 3
-   ▼
-prog.ll  (LLVM IR)
-   │   clang + runtime.c
-   ▼
-./prog
+```mermaid
+%%{init: {"flowchart": {"wrappingWidth": 460}}}%%
+flowchart TD
+    src(["<b>prog.fpl</b><br/>Anka source code, plain text"])
+
+    subgraph p1 ["Phase 1 · Front end"]
+        lex["<b>Lexer</b> · src/lexer.l · Flex<br/>reads characters and groups them into tokens<br/>longest match wins: == is one token, not two<br/>on a tie the keyword rule wins: then is THEN<br/>skips spaces and comments, tracks line:col"]
+        par["<b>Parser</b> · src/parser.y · Bison, LALR(1)<br/>checks the token order against the grammar<br/>precedence table: a + b * c means a + (b * c)<br/>builds the AST bottom-up, one node per rule<br/>on a syntax error: skip to in, then, else, let, ), fn"]
+        lex -- "tokens<br/>FN IDENT LPAREN ..." --> par
+    end
+
+    subgraph p2 ["Phase 2 · Analysis"]
+        chk["<b>Type checker</b> · src/check.c<br/>pass 1: collect every fn signature, so recursion works<br/>pass 2: walk each body with a symbol table of scopes<br/>every name defined, every operand and argument typed right<br/>a fun may not use outer variables, main must exist<br/>a failed part gets type error: one message, no cascade"]
+    end
+
+    subgraph p3 ["Phase 3 · Back end"]
+        gen["<b>Code generator</b> · src/codegen.c<br/>one LLVM function per fn; each let is an SSA value<br/>if, && and || become branches joined by phi<br/>each fun becomes a hidden top-level function<br/>functions are passed around as pointers<br/>every / checks for zero before sdiv"]
+    end
+
+    ll(["<b>prog.ll</b><br/>LLVM IR as text, checked with opt -passes=verify"])
+    exe(["<b>./prog</b><br/>native program: runs main and exits 0<br/>division by zero: message on stderr, exit 1"])
+
+    src -- "characters" --> lex
+    par -- "AST<br/>the program as a tree" --> chk
+    chk -- "checked AST<br/>every node has a type" --> gen
+    gen -- "IR text" --> ll
+    ll -- "clang + runtime.c<br/>adds print_int, print_bool" --> exe
 ```
 
 | Stage | Source | Turns … into … | Look at it with |
