@@ -4,7 +4,7 @@ Newest entry on top. One entry per working session, written by `/wrap-up`.
 
 ---
 
-## 2026-11-27 — Final project analysis, toolchain, repo reorganization
+## 2026-11-27 — Final project kickoff: analysis, repo reorg, CI, spec v1.0
 
 **Done**
 - Analyzed the final-project directive against the repo. Finding: only the P1 lexer exists, and Anka v0.2 (C-like, loops, mutation, floats, strings) conflicts with the required functional, expression-based language. Decision: **evolve this repo, don't restart**. Keep the name Anka and the lexer structure, and redesign the grammar as v1.0.
@@ -12,12 +12,13 @@ Newest entry on top. One entry per working session, written by `/wrap-up`.
 - Toolchain: student ran `brew install bison llvm` → Bison 3.8.2, LLVM/clang 23.1.6 (both keg-only). Checked with a hand-written `fact.ll` + C runtime: `opt -passes=verify` OK, clang links it, prints `120`.
 - Repo reorganized: P1 code + 34-case tests frozen in `projects/project-1/code/` (own Makefile, still 8/8 PASS, CRLF test file kept via `.gitattributes`); `docs/study/` → `projects/project-1/study/`; `docs/LANGUAGE.md` v0.2 → `projects/project-1/LANGUAGE-v0.2.md`; directive → `projects/final-project/directives/`. New root `Makefile` builds `build/fplc` warning-free and finds the Homebrew tools (`make tools`).
 - Rewrote `docs/PLAN.md` (final-project schedule, checklist per phase, decisions) and `docs/ROADMAP.md`; updated `CLAUDE.md`, `.claude/rules/c-flex.md` (diagnostics, Bison, LLVM, new test layout), `docs-and-memory.md`, the `/wrap-up` skill.
-- Drafted `docs/LANGUAGE.md` **v1.0** (functional Anka): 11 keywords, 16 operators, EBNF grammar, precedence table, type rules, scopes/capture, semantics (wrapping, `INT_MIN / -1`, div-by-zero), CLI, diagnostic catalog, AST dump format, 6 example programs with hand-computed output, 6 design decisions, §12 review checklist. Grammar checked in Bison before writing it.
+- Drafted `docs/LANGUAGE.md` **v1.0** (functional Anka): 11 keywords, 16 operators (15 after the review removed `%`), EBNF grammar, precedence table, type rules, scopes/capture, semantics (wrapping, `INT_MIN / -1`, div-by-zero), CLI, diagnostic catalog, AST dump format, 6 example programs with hand-computed output, 6 design decisions, §12 review checklist. Grammar checked in Bison before writing it.
 - `.githooks/commit-msg` (type prefix, ≤ 72 chars, no period, imperative, blank line 2), `make hooks`, and `.github/workflows/ci.yml` (commit-message job + gcc/clang `-Werror` build matrix + P1 tests + `run_tests.sh` when present). Hook tested on 13 sample messages and the real history; both compilers build with `-Werror` locally.
 - **Spec review with the student → `docs/LANGUAGE.md` v1.0 final.** Accepted: main's result ignored, print returns 0, multi-parameter `fun`, optional `let` annotation, one comparison level, big literals are lexer errors, runtime error format, `--check`/`--tokens`, indented AST. Changed: **`%` and nested comments removed**, `!` kept. Examples 4 and 5 rewritten (5 now uses a `rem` helper), outputs recomputed by hand.
 - Commit rule: no `Co-Authored-By` trailers from now on (student's request; `.claude/rules/workflow.md`). Three pushed commits keep theirs; the student chose not to rewrite history.
 - Rewrote root `README.md`: what Anka/`fplc` is, a code sample, the pipeline in plain words, a status table, requirements (macOS + Ubuntu), build/run (current `--tokens` vs the planned CLI), tests, repository structure, workflow, credits.
-- Found: the GitHub repo is **PUBLIC**, against course policy. The student must make it private (`gh repo edit … --visibility private`).
+- Student enabled `make hooks` and pushed; CI is green on Ubuntu 24.04 (gcc + clang `-Werror`, P1 8/8; the runner has Flex 2.6.4, Bison 3.8.2, **LLVM 18.1.3**). Wrap-up check: root build `-Werror` OK, P1 snapshot 8/8; no `run_tests.sh` yet.
+- Found: the GitHub repo is **PUBLIC**, against course policy. Still public at wrap-up; the student must make it private (`gh repo edit … --visibility private`).
 
 **Bugs hit**
 - Spec bug: the directive's `{ def } expr` program shape gives 3 shift/reduce conflicts with C-style calls (`(` and `-` after a function body). Fixed by requiring `fn main() -> int`; 0 conflicts.
@@ -26,10 +27,9 @@ Newest entry on top. One entry per working session, written by `/wrap-up`.
 - Tooling, open: clang warns `overriding the module target triple … [-Woverride-module]` when linking our `.ll`. To be decided in Phase 3.
 
 **Next**
-1. Student: make the repo private, `make hooks`, push, and confirm the first CI run is green.
+1. **Student: make the repo private** (`gh repo edit merteldem1r/Compiler-Design-COME463 --visibility private --accept-visibility-change-consequences`).
 2. Write `SPEC.md` v1 (≤ 2 pages) from `docs/LANGUAGE.md` v1.0; keep it as the LLM experiment baseline.
-2. Walking skeleton: `print_int(42)` through lexer → parser → AST → checker → `.ll` → clang → `42`.
-3. Walking skeleton `print_int(42)`, then Phase 1: lexer update with columns, `parser.y`, AST, `--emit-ast`, recovery, tests.
+3. Walking skeleton: `print_int(42)` through lexer → parser → AST → checker → `.ll` → clang → `42`. Then Phase 1: lexer update with columns, `parser.y`, AST, `--emit-ast`, recovery, tests.
 
 ---
 

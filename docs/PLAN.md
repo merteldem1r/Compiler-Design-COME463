@@ -43,7 +43,9 @@ Interface fixed by the directive: `./fplc prog.fpl --emit-ast`, `./fplc prog.fpl
 - [x] Toolchain: `brew install bison llvm`; checked a hand-written `.ll` with `opt -passes=verify`, linked with clang, it printed `120` (2026-11-27)
 - [x] Repo reorganized: P1 frozen in `projects/project-1/code/` (still 8/8), root = final project (2026-11-27)
 - [x] `.githooks/commit-msg` + `make hooks`; `.github/workflows/ci.yml` (commit messages, gcc + clang `-Werror`, P1 tests, `run_tests.sh` when it exists) (2026-11-27)
-- [ ] **Student:** make the GitHub repo private (it is PUBLIC; course policy forbids posting solutions), run `make hooks`, push, and check that the first CI run is green
+- [x] `make hooks` enabled; first CI runs green on Ubuntu 24.04 (gcc + clang `-Werror`, P1 8/8, Flex 2.6.4, Bison 3.8.2, LLVM 18.1.3) (2026-11-27)
+- [ ] **Student: make the GitHub repo private.** Still PUBLIC on 2026-11-27; course policy forbids posting solutions: `gh repo edit merteldem1r/Compiler-Design-COME463 --visibility private --accept-visibility-change-consequences`
+- [ ] `SPEC.md` v1 written from LANGUAGE.md v1.0
 - [x] `docs/LANGUAGE.md` v1.0 **draft**: tokens, grammar (Bison-checked, 0 conflicts), precedence, type rules, semantics, CLI, messages, AST dump, 6 examples with hand-computed output, design decisions (2026-11-27)
 - [x] Student review of `docs/LANGUAGE.md` → **v1.0 final** (§12 review outcome) (2026-11-27)
 - [ ] `SPEC.md` v1 (≤ 2 pages, 5+ example programs), made from LANGUAGE.md. Keep v1 forever: it is the LLM experiment's baseline
