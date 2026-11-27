@@ -37,6 +37,7 @@ docs/
   AI_USAGE.md                AI prompts and mistakes, feeds reports  ← living
   LANGUAGE.md                Anka v1.0 spec, source of truth (being written)
   ROADMAP.md                 semester overview and milestones
+  assets/                    images for README and reports (anka-banner.svg, hand-written SVG)
   lectures-notes/            course material (read-only)
 projects/
   project-1/                 FROZEN, submitted: directives/, solution/ (SPEC, REPORT, BPE),

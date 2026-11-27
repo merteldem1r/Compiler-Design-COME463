@@ -1,0 +1,125 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="400" viewBox="0 0 1280 400" role="img" aria-labelledby="title desc">
+  <title id="title">Anka</title>
+  <desc id="desc">A phoenix next to the name Anka, the tagline "A small functional language, compiled to LLVM IR", and the compiler pipeline: .fpl, tokens, AST, typed AST, LLVM IR.</desc>
+
+  <defs>
+    <!-- Background: deep navy, slightly lighter towards the bottom right -->
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0a0e1a"/>
+      <stop offset="1" stop-color="#161c2e"/>
+    </linearGradient>
+
+    <!-- Fire: deep red at the bottom, gold at the top -->
+    <linearGradient id="fire" x1="0" y1="1" x2="0" y2="0">
+      <stop offset="0" stop-color="#b91c1c"/>
+      <stop offset="0.45" stop-color="#f97316"/>
+      <stop offset="1" stop-color="#fcd34d"/>
+    </linearGradient>
+    <linearGradient id="fireSoft" x1="0" y1="1" x2="0" y2="0">
+      <stop offset="0" stop-color="#9a3412"/>
+      <stop offset="1" stop-color="#fb923c"/>
+    </linearGradient>
+    <linearGradient id="titleFill" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#fde68a"/>
+      <stop offset="0.55" stop-color="#fb923c"/>
+      <stop offset="1" stop-color="#ef4444"/>
+    </linearGradient>
+
+    <!-- Warm glow behind the bird -->
+    <radialGradient id="glow" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#f97316" stop-opacity="0.35"/>
+      <stop offset="1" stop-color="#f97316" stop-opacity="0"/>
+    </radialGradient>
+
+    <!-- Faint dot grid -->
+    <pattern id="dots" width="28" height="28" patternUnits="userSpaceOnUse">
+      <circle cx="2" cy="2" r="1.2" fill="#ffffff" fill-opacity="0.05"/>
+    </pattern>
+
+    <!-- One wing (the right one); the left wing is the same shape mirrored -->
+    <g id="wing">
+      <path d="M268,172 C322,150 384,92 446,38 C428,112 384,172 300,212 Z" fill="url(#fire)"/>
+      <path d="M270,188 C330,178 392,142 432,112 C404,172 352,212 290,228 Z" fill="url(#fireSoft)" opacity="0.9"/>
+      <path d="M272,204 C320,208 372,198 412,178 C384,226 334,246 286,242 Z" fill="url(#fire)" opacity="0.75"/>
+    </g>
+
+    <!-- One side tail feather; mirrored for the other side -->
+    <path id="tail" d="M256,246 C232,284 214,318 196,352 C224,332 246,302 263,264 Z" fill="url(#fireSoft)"/>
+
+    <!-- One crest flame; mirrored for the other side -->
+    <path id="crest" d="M258,104 C250,92 246,80 240,68 C254,76 262,88 264,102 Z" fill="url(#fire)"/>
+  </defs>
+
+  <rect width="1280" height="400" fill="url(#bg)"/>
+  <rect width="1280" height="400" fill="url(#dots)"/>
+
+  <!-- ============ The phoenix (the Anka) ============ -->
+  <ellipse cx="262" cy="206" rx="230" ry="190" fill="url(#glow)"/>
+
+  <g>
+    <use href="#wing"/>
+    <use href="#wing" transform="translate(520,0) scale(-1,1)"/>
+
+    <use href="#tail"/>
+    <use href="#tail" transform="translate(520,0) scale(-1,1)"/>
+    <path d="M260,250 C276,290 272,332 260,374 C248,332 244,290 260,250 Z" fill="url(#fire)"/>
+
+    <!-- Body and head -->
+    <path d="M260,132 C286,150 292,202 260,264 C228,202 234,150 260,132 Z" fill="url(#fire)"/>
+    <circle cx="260" cy="119" r="15" fill="#fcd34d"/>
+    <path d="M253,126 L267,126 L260,140 Z" fill="#f97316"/>
+
+    <use href="#crest"/>
+    <use href="#crest" transform="translate(520,0) scale(-1,1)"/>
+    <path d="M256,101 C254,86 256,70 260,56 C264,70 266,86 264,101 Z" fill="url(#fire)"/>
+  </g>
+
+  <!-- Embers rising -->
+  <g fill="#fdba74">
+    <circle cx="120" cy="300" r="3" opacity="0.7"/>
+    <circle cx="150" cy="250" r="2" opacity="0.5"/>
+    <circle cx="96" cy="210" r="2.5" opacity="0.4"/>
+    <circle cx="410" cy="290" r="3" opacity="0.6"/>
+    <circle cx="384" cy="330" r="2" opacity="0.5"/>
+    <circle cx="444" cy="236" r="2" opacity="0.4"/>
+    <circle cx="210" cy="60" r="2" opacity="0.5"/>
+    <circle cx="318" cy="48" r="2.5" opacity="0.5"/>
+  </g>
+
+  <!-- Thin separator -->
+  <rect x="500" y="80" width="2" height="240" fill="#ffffff" fill-opacity="0.08"/>
+
+  <!-- ============ Name and tagline ============ -->
+  <text x="548" y="170" font-family="'Segoe UI', 'Helvetica Neue', Helvetica, Arial, sans-serif"
+        font-size="108" font-weight="800" letter-spacing="3" fill="url(#titleFill)">Anka</text>
+  <text x="552" y="218" font-family="'Segoe UI', 'Helvetica Neue', Helvetica, Arial, sans-serif"
+        font-size="29" fill="#e5e7eb">A small functional language, compiled to LLVM IR</text>
+
+  <!-- ============ Pipeline: .fpl > tokens > AST > typed AST > LLVM IR ============ -->
+  <g font-family="SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="19"
+     text-anchor="middle" fill="#fde68a">
+    <g fill="#f97316" fill-opacity="0.12" stroke="#f97316" stroke-opacity="0.55" stroke-width="1.5">
+      <rect x="552" y="252" width="86" height="40" rx="20"/>
+      <rect x="682" y="252" width="110" height="40" rx="20"/>
+      <rect x="836" y="252" width="78" height="40" rx="20"/>
+      <rect x="958" y="252" width="140" height="40" rx="20"/>
+      <rect x="1142" y="252" width="118" height="40" rx="20" fill-opacity="0.28" stroke-opacity="0.9"/>
+    </g>
+    <text x="595" y="279">.fpl</text>
+    <text x="737" y="279">tokens</text>
+    <text x="875" y="279">AST</text>
+    <text x="1028" y="279">typed AST</text>
+    <text x="1201" y="279" font-weight="700">LLVM IR</text>
+
+    <g fill="none" stroke="#fb923c" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M648,272 H672 M664,264 L672,272 L664,280"/>
+      <path d="M802,272 H826 M818,264 L826,272 L818,280"/>
+      <path d="M924,272 H948 M940,264 L948,272 L940,280"/>
+      <path d="M1108,272 H1132 M1124,264 L1132,272 L1124,280"/>
+    </g>
+  </g>
+
+  <!-- ============ Compiler line ============ -->
+  <text x="552" y="342" font-family="SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', monospace"
+        font-size="20" fill="#9ca3af"><tspan fill="#fb923c" font-weight="700">fplc</tspan>  ·  C11 · Flex · Bison · LLVM</text>
+</svg>

@@ -22,6 +22,7 @@ Course policy: AI use must be acknowledged in every report, with **2–3 prompts
 | 2026-11-27 | Final | Ran the spec review as three rounds of multiple-choice questions (10 choices, each with the trade-off explained), then applied the answers to LANGUAGE.md and PLAN.md | P-19, P-20 | (1) The AI had suggested commit commands with a `Co-Authored-By` trailer; the student asked to drop it, and the rule is now in `workflow.md`. (2) The draft had bundled three features into one review item (`%`, `!`, nested comments), so the student's "no" was ambiguous; a follow-up question separated them |
 | 2026-11-27 | Final | Diagnosed a failed CI run from its log (`gh run view --log-failed`) and made the workflow's apt step tolerant of third-party mirror outages; bumped `actions/checkout` | P-21 | The AI's original workflow had `apt-get update` fail the job on any source error, including sources we don't use. Not foreseen; fixed after the first real outage |
 | 2026-11-27 | Final | Redesigned the README with Mermaid diagrams, badges and note boxes; removed emojis repo-wide and wrote the no-emoji rule | P-22 | The AI itself had put emojis into the README, ROADMAP and PLAN status columns, and its text-art pipeline diagram overflowed the GitHub code box (the student's screenshot). The AI then replaced it with Mermaid diagrams (flowchart + timeline); the student found that too heavy and asked for something simpler, so it became a narrow vertical text diagram |
+| 2026-11-27 | Final | Brought back a Mermaid pipeline with a detailed box per compiler stage; asked four design questions, then drew the README banner (`docs/assets/anka-banner.svg`, a hand-written SVG) | P-23 | (1) The first detailed diagram wrapped every label at Mermaid's 200 px default and cut off the phase titles; found by rendering it in headless Chrome, fixed with `wrappingWidth` and shorter titles. (2) In the banner the AI gave the title gradient the same id (`title`) as the SVG's `<title>` element, so the word "Anka" did not render; found by rendering, fixed by renaming the gradient |
 
 ## Prompts (verbatim)
 
@@ -90,3 +91,6 @@ Course policy: AI use must be acknowledged in every report, with **2–3 prompts
 
 **P-22 (2026-11-27):**
 > could you make the repo a bit more visually good looking, for instance that [screenshot] flow you can rewrite that in more visually good looking way, also don't use any kind of emojies on the readme.md or any kind of docuemnt please, add that rule please
+
+**P-23 (2026-11-27):**
+> I want from you to also generate me the image that is realted with our projecy, our Anka language, we will attach that image at the top of the readme.md, something good looking, describing the compiler, maybe you can ask the question so we can decide together how that should look like, then generat and add udnert he docs assets and attach on the readme.md
