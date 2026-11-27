@@ -4,6 +4,56 @@ Newest entry on top. One entry per working session, written by `/wrap-up`.
 
 ---
 
+## 2026-11-27 — Final project analysis, toolchain, repo reorganization
+
+**Done**
+- Analyzed the final-project directive against the repo. Finding: only the P1 lexer exists, and Anka v0.2 (C-like, loops, mutation, floats, strings) conflicts with the required functional, expression-based language. Decision: **evolve this repo, don't restart**. Keep the name Anka and the lexer structure, and redesign the grammar as v1.0.
+- Student decisions: P1 submitted; solo confirmed; demo **Tue 2026-12-15**; **C-style calls `f(x, y)`**; `.fpl` + `fplc`.
+- Toolchain: student ran `brew install bison llvm` → Bison 3.8.2, LLVM/clang 23.1.6 (both keg-only). Checked with a hand-written `fact.ll` + C runtime: `opt -passes=verify` OK, clang links it, prints `120`.
+- Repo reorganized: P1 code + 34-case tests frozen in `projects/project-1/code/` (own Makefile, still 8/8 PASS, CRLF test file kept via `.gitattributes`); `docs/study/` → `projects/project-1/study/`; `docs/LANGUAGE.md` v0.2 → `projects/project-1/LANGUAGE-v0.2.md`; directive → `projects/final-project/directives/`. New root `Makefile` builds `build/fplc` warning-free and finds the Homebrew tools (`make tools`).
+- Rewrote `docs/PLAN.md` (final-project schedule, checklist per phase, decisions) and `docs/ROADMAP.md`; updated `CLAUDE.md`, `.claude/rules/c-flex.md` (diagnostics, Bison, LLVM, new test layout), `docs-and-memory.md`, the `/wrap-up` skill.
+
+**Bugs hit**
+- Tooling: LLVM 23 rejects the directive's `opt -verify` ("the `opt -passname` syntax … is not supported"). Use `opt -passes=verify -disable-output`.
+- Tooling, open: clang warns `overriding the module target triple … [-Woverride-module]` when linking our `.ll`. To be decided in Phase 3.
+
+**Next**
+1. Write `docs/LANGUAGE.md` v1.0 (functional Anka: tokens, grammar, precedence, type rules, semantics, error messages, AST dump format); student reviews it; then `SPEC.md` v1.
+2. Walking skeleton: `print_int(42)` through lexer → parser → AST → checker → `.ll` → clang → `42`.
+3. Phase 1: lexer update with columns, `parser.y`, AST, `--emit-ast`, recovery, tests.
+
+---
+
+## 2026-11-25 — Final project directive saved *(recovered)*
+
+> No agent session; rebuilt on 2026-11-27 from commit `1f1c96d`.
+
+**Done**
+- The student saved the professor's final-project text as `projects/final-project/final_project.md` (moved to `directives/` on 2026-11-27).
+
+**Next**
+1. Analyze the directive and plan the final project.
+
+---
+
+## 2026-10-16 — P1 report in plainer words, own test C34 *(recovered)*
+
+> The session ended without `/wrap-up`; rebuilt on 2026-11-27 from commits `1fb7bd0`, `0877691` and the matching `AI_USAGE.md` row.
+
+**Done**
+- The student wrote their own test program `tests/lexer/my_anka_code.anka` (`1fb7bd0`). The AI added its case header and hand-checked expected output as **C34** (nested `))`, no final newline): 8 files, 34 cases, 8/8 PASS.
+- `REPORT.html` rewritten in plainer first-person language, still 2 pages; BPE results regenerated (512 vs 1,810 tokens); counts updated in README / PLAN / walkthrough.
+- P1 was then submitted (student confirmed on 2026-11-27).
+
+**Bugs hit**
+- `1fb7bd0` added a test without an expected file, so `make test` and therefore `make package-p1` failed, and the report's BPE numbers were stale. Fixed by adding `expected/my_anka_code.out`.
+- The first plain-language rewrite was 4 pages; trimmed to 2, checked by rendering the PDF.
+
+**Next**
+1. Submit P1 (done).
+
+---
+
 ## 2026-10-15/16 — Lexer, tests, BPE, SPEC + REPORT, submission zip
 
 **Done**

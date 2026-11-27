@@ -3,8 +3,8 @@
 Sessions don't share memory, but the repo does. Keep these files current so any session, local or cloud, can continue cold.
 
 ## Source of truth, in priority order
-1. `projects/project-N/directives/`: what the professor requires. Wins every conflict.
-2. `docs/LANGUAGE.md`: what our language is (tokens, grammar, types). Code must match it.
+1. `projects/<name>/directives/` (now `projects/final-project/directives/`): what the professor requires. Wins every conflict.
+2. `docs/LANGUAGE.md`: what our language is (tokens, grammar, types, semantics, messages). Code must match it. `SPEC.md` (root) is its ≤ 2-page summary for the grader and the LLM experiment; update it whenever LANGUAGE.md changes, and keep each version the experiment used.
 3. `docs/PLAN.md`: what we are doing now and the decisions already made. Don't reopen a logged decision without a reason.
 4. Everything else.
 
@@ -22,3 +22,4 @@ Sessions don't share memory, but the repo does. Keep these files current so any 
 - Dates are absolute (`2026-10-14`), never "yesterday" or "next week".
 - **Bugs hit** entries matter: project reports require concrete bugs (what failed, why, fix).
 - When a milestone is submitted, summarize it in `ROADMAP.md` and rewrite `PLAN.md` for the next milestone.
+- Finished projects are frozen under `projects/<name>/` (e.g. `projects/project-1/code/`). Don't develop there; new work goes in root `src/` and `tests/`.

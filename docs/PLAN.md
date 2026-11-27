@@ -1,99 +1,110 @@
-# Current Plan — Project 1: Lexical Analysis
+# Current Plan — Final Project: Anka, a functional language compiled to LLVM
 
-> The working plan for the **current** milestone. When it ships, summarize it in `ROADMAP.md` and rewrite this file for the next milestone.
+> The working plan for the **current** milestone. When it ships, summarize it in `ROADMAP.md` and rewrite this file.
 
-**Directive:** `projects/project-1/directives/p1.md` (copied verbatim from the professor's GitHub)
-**Due: before class on 2026-10-20 (class is Tuesday 09:30).** The directive says "Monday, October 20", but Oct 20, 2026 is a **Tuesday**. Until the professor confirms, we treat **Mon 2026-10-19** as the working deadline. No late submissions.
-**Submit on Google Classroom:** the Part A PDF and the Part B zip (which contains REPORT.pdf).
-**Stack:** C + Flex (Path A). Solo. **Language:** Anka (`.anka`), spec in `docs/LANGUAGE.md`.
+**Directive:** `projects/final-project/directives/final_project.md` (the professor's text, verbatim)
+**Demo: Tue 2026-12-15** (class, 10 minutes). **Submission:** "end of week 14". Working deadline **Sun 2026-12-13** until the exact date/format is confirmed.
+**Solo** (confirmed by the professor). Graded as **two projects**. **Path A:** C11 + Flex + Bison, emitting `.ll` text.
+**Tools:** Flex 2.6.4 · Bison 3.8.2 and LLVM/clang 23.1.6 from Homebrew (keg-only, the Makefile finds them) · `make tools` prints the versions.
 
-## What is being graded
+## What is graded
 
-| Part | What | Weight | Who does it |
-|---|---|---|---|
-| A | RE → NFA → DFA theory, **handwritten** and scanned to one PDF | 30% | You, on paper. Claude tutors and checks |
-| B | Design our own language + Flex lexer + tests + BPE comparison + report | 60% | Together |
-| Bonus | Regex → NFA → DFA visualizer (Python + graphviz) | +10% | Only if time is left |
-
-Part B breakdown: spec 15, correct tokenization 15, maximal munch + keyword priority + error handling 10, test suite 10, report 10, BPE comparison 10.
-
-## Schedule (revised 2026-10-15)
-
-Part A study guide: `docs/study/p1-part-a-guide.md`.
-
-| Day | Part B (together) | Part A (you, ~1.5 h/day) |
+| Phase | Weight | Content |
 |---|---|---|
-| Wed 14 | Repo setup ✅ · language designed ✅ (`docs/LANGUAGE.md` v0.1) | (slipped) |
-| Thu 15 | Spec review ✅ (v0.2) · lexer + driver + Makefile ✅ · tests ✅ (pulled forward) | A1 regexes |
-| Fri 16 | BPE ✅ · SPEC.pdf + REPORT.pdf drafted ✅ · zip built + dry-run ✅ (all pulled forward) | A2 automata + A3 Thompson |
-| Sat 17 | **Student reviews/edits REPORT + SPEC** (`make pdf-p1 && make package-p1`) · optional Linux check | A4 subset + minimization |
-| Sun 18 | Buffer | A5 + scan to PDF |
-| Mon 19 | **Submit** (working deadline) · `git tag p1-submission` | — |
-| Tue 20 | Buffer only if the professor confirms Tue 09:30 | — |
+| 1 Spec + parser + AST | 30 | SPEC.md (≤ 2 pages, 5+ examples), lexer, parser, real AST, `--emit-ast`, located syntax errors, panic-mode recovery, tests |
+| 2 Type checker | 30 | Scopes + shadowing, all type rules, (mutual) recursion, lambda capture errors, expected/found diagnostics, `error` type so errors don't cascade, tests |
+| 3 LLVM codegen | 40 | `--emit-ll` valid IR, `br`+`phi`, SSA lets, calls/recursion/function values, div-by-zero check, `runtime.c`, `run_tests.sh`, no crashes |
+
+The report (3 pages) and the demo count inside the phase grades, mostly Phase 3. Bonus +10%: later, if there is time (`--diagnostics=json` is the cheapest).
+
+## Deliverable layout (the repo root mirrors it)
+
+```
+README.md   SPEC.md   src/   runtime.c   tests/{valid,errors,recovery}/   examples/   run_tests.sh   REPORT.pdf
+```
+Interface fixed by the directive: `./fplc prog.fpl --emit-ast`, `./fplc prog.fpl --emit-ll -o prog.ll`, diagnostics `<file>:<line>:<col>: error: <message>` on stderr, exit 0/1, no `.ll` written on error.
+
+## Schedule
+
+| Dates | Work | Phase |
+|---|---|---|
+| Fri 11-27 | Analysis ✅ · toolchain ✅ · repo reorganized, P1 frozen ✅ | — |
+| Sat 11-28 – Sun 11-29 | `docs/LANGUAGE.md` v1.0 (student review) → `SPEC.md` v1 · **walking skeleton**: `print_int(42)` through lexer → parser → AST → checker → `.ll` → clang → `42` | setup |
+| Mon 11-30 – Wed 12-02 | Lexer update (new tokens, columns), `parser.y`, AST, `--emit-ast`, panic-mode recovery, syntax-error + recovery tests | 1 |
+| Thu 12-03 – Sun 12-06 | Type checker + type-error and recovery tests | 2 |
+| Mon 12-07 – Thu 12-10 | Code generator, `runtime.c`, `run_tests.sh`, valid tests, 30+ line program, `examples/` | 3 |
+| Thu 12-10 – Sat 12-12 | LLM experiment, BPE comparison | report |
+| Sat 12-12 – Sun 12-13 | `REPORT.pdf`, README, package + dry run from an empty folder, **submit** | report |
+| Mon 12-14 | One slide, rehearse the demo (incl. the professor's mutation test) | demo |
 
 ## Checklist
 
-### Part B: language and lexer
-- [x] Official directive saved to `projects/project-1/directives/p1.md`
-- [x] Repo structure, `CLAUDE.md`, session/AI logs, `/wrap-up` skill, git init
-- [x] Language name + one-sentence purpose: **Anka**, a small statically typed C-like language
-- [x] `docs/LANGUAGE.md`: token table (category → regex → example) covering **≥6 keywords, identifiers, int + float literals, ≥8 operators incl. multi-char (`==`, `<=`, `&&`), punctuation, `//` and `/* */` comments, a control structure, a loop**, plus 3 example programs (5–10 lines) and 2 design decisions with reasons
-- [x] Design with M2–M4 in mind: `return`, functions, `{ }`, `;`, types, `true/false`, string literals
-- [x] Student review of `docs/LANGUAGE.md` → v0.2 (2026-10-15)
-  - [x] Leading zeros in floats: **allowed** (`007.5` is a float), like Python 3
-  - [x] `123abc` stays `INT_LIT IDENT` (parser rejects it in P2); covered by a test
-  - [x] Confirmed: `print` keyword, `007` error, no negative literals, `1.`/`.5` invalid, ASCII only (non-ASCII bytes reported in hex)
-- [x] `src/lexer.l`, `src/tokens.h`, `src/main.c`, `Makefile` (`make`, `make test`) — builds warning-free with clang and gcc-15 (2026-10-15)
-- [x] `make package-p1` → `dist/project1.zip`; unzipped in an empty folder: builds warning-free (clang, gcc-15), 7/7 tests, BPE reproduces (2026-10-16)
-- [x] Lexer handles: maximal munch, keyword priority, line numbers, errors (report line, skip, continue), multi-char operators, both comment kinds, unterminated `/*` at EOF
-- [x] Tests: `tests/lexer/` 8 files, 34 cases C1–C34 (valid programs, edge cases, error cases) with `tests/lexer/expected/`; `make test` 8/8 pass (2026-10-15; C34 = the student's own `my_anka_code.anka`, added 2026-10-16)
-- [x] Log every real bug we hit (the report needs **3 bugs**: what failed, why, how it was fixed). 3 logged below
+### Setup
+- [x] Toolchain: `brew install bison llvm`; checked a hand-written `.ll` with `opt -passes=verify`, linked with clang, it printed `120` (2026-11-27)
+- [x] Repo reorganized: P1 frozen in `projects/project-1/code/` (still 8/8), root = final project (2026-11-27)
+- [ ] `docs/LANGUAGE.md` v1.0: tokens, grammar, precedence, type rules, semantics, error messages, AST dump format. **Student reviews**
+- [ ] `SPEC.md` v1 (≤ 2 pages, 5+ example programs), made from LANGUAGE.md. Keep v1 forever: it is the LLM experiment's baseline
+- [ ] Walking skeleton `print_int(42)` end to end
 
-### Part B: BPE comparison and report
-- [x] `.venv` + tiktoken 0.14.0; `bpe_compare.py` → `results.md`; `make bpe` regenerates it (2026-10-16)
-- [x] Answer the 5 BPE questions (token counts, `42`, `@`, parser vs neural net, the Turkish sentence): AI draft in REPORT §3, **student to review/rewrite**
-- [x] `REPORT.html` → `REPORT.pdf` (2 pages: design / testing and bugs / AI usage + BPE, covers `ifx`), `make pdf-p1`. **Student must read and edit before submitting**
-- [x] `SPEC.html` → `SPEC.pdf` (1 page)
-- [x] Submission `README.md`: author, path, build instructions, AI tools used
-- [x] Zip layout: `project1/{README.md, SPEC.pdf, src/, tests/, output/, REPORT.pdf}` (+ `Makefile`, `bpe/`)
-- [ ] Optional: Linux build check in Docker (needs Docker Desktop running)
-- [x] REPORT rewritten in plainer first-person language, still 2 pages; numbers updated to 8 files / 34 cases / 512 vs 1,810 BPE tokens (2026-10-16)
-- [ ] **Student: read REPORT.html / SPEC.html and change anything that doesn't sound like you**, then `make pdf-p1 && make package-p1` (the zip must be rebuilt: it still has 7 tests)
-- [ ] Submit Part A PDF + `dist/project1.zip` on Classroom · `git tag p1-submission` · then update ROADMAP and rewrite this PLAN for P2
+### Phase 1: parser + AST
+- [ ] Lexer: remove P1-only tokens (loops, assignment ops, float, string, `**`, `..`, braces/`;`); add `then`, `fun`, `print_int`/`print_bool` as built-in names; track **columns** (`yylloc`); diagnostics in the new format on stderr
+- [ ] `tokens.h` replaced by Bison's generated header
+- [ ] `src/parser.y` (Bison 3): grammar + precedence; `let…in` / `if…else` / `fun` extend as far right as possible
+- [ ] `src/ast.{c,h}`: AST node types, constructors, `free`, `--emit-ast` printer
+- [ ] Panic-mode recovery with `error` rules, resynchronizing on `in`, `then`, `else`, `let`, `)`, EOF; reports several independent errors
+- [ ] Tests: ≥ 5 syntax errors in `tests/errors/`, recovery cases in `tests/recovery/`
 
-### Part A (handwritten, individual)
-- [ ] A1 regexes (15) · [ ] A2 automata (15) · [ ] A3 Thompson (10) · [ ] A4 subset + minimization (15) · [ ] A5 short answers (5)
-- [ ] Scan everything to one PDF with name and student ID on every page
+### Phase 2: type checker
+- [ ] Symbol table with nested scopes + shadowing
+- [ ] Two passes: collect every top-level signature first, then check bodies (mutual recursion)
+- [ ] All type rules; call arity and argument types; `if` condition is `bool` and both branches have the same type
+- [ ] Lambda capture detection: a `fun` body may use only its parameter, top-level functions and built-ins
+- [ ] Diagnostics: location + expected type + found type; internal `error` type that matches anything silently (no cascades)
+- [ ] Tests: ≥ 5 type errors, ≥ 3 recovery files in total (multiple errors, no cascades)
 
-## Bugs log (raw material for REPORT §2)
+### Phase 3: LLVM code generation
+- [ ] `--emit-ll -o`: `add/sub/mul/sdiv/srem/icmp`, `if` → `br` + `phi`, `let` → SSA values, calls, recursion
+- [ ] `&&` / `||` short-circuit (branches + `phi`, not `and`/`or`)
+- [ ] Function values as `ptr`; lambdas lifted to hidden top-level functions (possible because they cannot capture)
+- [ ] Division by zero: check before `sdiv`/`srem`, call a runtime function that prints to stderr and exits nonzero. Also `INT_MIN / -1` (UB in LLVM, but our ints wrap)
+- [ ] `runtime.c`: `print_int`, `print_bool`, the div-by-zero handler
+- [ ] Decide what to do about clang's `-Woverride-module` warning (target triple)
+- [ ] `run_tests.sh`: builds, runs valid/errors/recovery, `opt -passes=verify` on every `.ll`, prints PASS/FAIL; truncation test (cut valid files at random points: never a crash)
+- [ ] ≥ 10 valid tests (precedence, shadowing, recursion, higher-order, `if` as expression), 1 runtime div-by-zero test, one 30+ line program
+- [ ] Expected outputs hand-computed (or from a reference interpreter), **never generated by `fplc` itself**
+- [ ] Check that the suite catches a mutation (`add` → `sub` in codegen) before the demo
+- [ ] `examples/`: `.ll` for 2–3 demo programs
+
+### Report, LLM experiment, demo
+- [ ] LLM experiment: 10 small tasks (2 use function values); a **fresh** LLM chat that sees only `SPEC.md`, one task at a time; record compiles / correct / error category; feed our error message back once; change one thing in spec/grammar/messages; re-measure
+- [ ] BPE (tiktoken) counts of our examples vs equivalent Python and OCaml
+- [ ] `REPORT.pdf` (3 pages): design (3 decisions + rejected alternatives, humans + LLMs), architecture + recovery + **3 real bugs** + test counts, LLM results + the change + conclusion; AI disclosure (2–3 prompts verbatim, one AI mistake)
+- [ ] `README.md`: author, path, LLVM version, build/run instructions
+- [ ] `make package` + dry run from an empty folder (clang; gcc check if possible) · submit · `git tag final-submission`
+- [ ] Demo: one slide, valid program → output, errors → diagnostics, AST/IR dump, hardest bug, LLM results
+
+## Bugs log (raw material for REPORT §2, needs 3)
 
 | Date | What failed | Why | Fix |
 |---|---|---|---|
-| 2026-10-15 | **#2** `print("abc\` + newline gave two errors: "unterminated string" and "unexpected character '\\'" | The escape part `\\.` needs a character after `\`, and `.` never matches `\n`, so the regex stopped before the lone `\` and the catch-all reported it | Unterminated rule ends with `\\?` (optional lone backslash). Test: `strings_comments.anka` C32 |
-| 2026-10-15 | **#3** In a Windows (`\r\n`) file, an unterminated string's error text contained an invisible `\r` that scrambled the terminal output | `[^"\\\n]` excluded `\n` but not `\r` | Exclude `\r` too: `[^"\\\r\n]` and escapes `\\[^\r\n]`. Test: `crlf_line_endings.anka` C33 (kept as CRLF by `.gitattributes`) |
-| 2026-10-15 | **#1** `make` printed a `-Wsign-compare` warning in `build/lex.yy.c` | Apple's Flex 2.6.4 generates code comparing a signed `int` with an unsigned `yy_size_t`; our `-Wextra` catches it. Not our code, so we can't fix the line | Compile the generated file separately with `-Wno-sign-compare`; `main.c` keeps all warnings |
+| | | | |
 
 ## Open questions
-- [ ] **Ask the professor on Classroom (one message):** (1) is the deadline Mon Oct 19 or Tue Oct 20 before class? (2) is working solo OK? (the assignment says groups of 2–3; the FAQ says 2 is fine)
-- [ ] Bonus: decide on Sat 17 based on time left.
-- [ ] Before P2: `brew install bison` (macOS `/usr/bin/bison` is 2.3, too old).
+- [ ] Exact submission date and format (Classroom zip?) for "end of week 14"
+- [ ] Reference interpreter: an `fplc --interp` mode in C over the same AST, or only hand-computed outputs? (Decide before Phase 3 tests)
+- [ ] Which LLM runs the experiment (must be a fresh chat with only `SPEC.md`)
+- [ ] Bonus: decide after Phase 3 works
 
 ## Decisions log
 
 | Date | Decision | Why |
 |---|---|---|
-| 2026-10-14 | Path A: C + Flex | The lectures and examples are Flex-first, C is a prerequisite, and it leads naturally into Bison for M2 |
-| 2026-10-14 | Compiler code in root `src/` and `tests/`, not per project | P2–P4 extend the same lexer. Each submission zip is assembled by `make package-pN` |
-| 2026-10-14 | The repo is the agent memory (`PLAN.md`, `SESSION_LOG.md`, `AI_USAGE.md`) | Solo, multi-session, and cloud agents only see committed files |
-| 2026-10-14 | `CLAUDE.md` is a short orientation map; all rules live in `.claude/rules/` | One place per concern; `CLAUDE.md` stays short and doesn't drift from the rules |
-| 2026-10-14 | The agent never runs git write commands; it shows them and the student runs them | The student keeps full control of history (also enforced in `.claude/settings.json`) |
-| 2026-10-14 | Language **Anka** (`.anka`): C-like, `x: int` annotations, braces + `;`, `->` `..` `**`, compound assignment, `%`, `break`/`continue`, `for i in a..b` | Chosen together via Q&A. Each feature is cheap in P2–P4; see `docs/LANGUAGE.md` §6 |
-| 2026-10-14 | Strings only as `print` arguments; comments nest | Full lexer edge cases without string memory management in P4; nesting is a strong "beyond regular" report point |
-| 2026-10-15 | Floats may have leading zeros; `123abc` is `INT_LIT IDENT`; non-ASCII bytes reported in hex (spec v0.2) | Python 3 precedent: the int ban exists because C reads `007` as octal, floats never had that meaning. `123abc` is a syntax problem the parser catches, so the lexer stays simple |
-| 2026-10-15 | Tests: 7 files, numbered cases C1–C33; expected outputs checked line by line, not just generated | A golden file only proves something if a human checked it; numbered cases let the report cite exact tests |
-| 2026-10-16 | SPEC and REPORT written as HTML and printed to PDF by headless Chrome (`make pdf-p1`) | No pandoc on this Mac; HTML gives exact control to fit the 1- and 2-page limits |
-| 2026-10-16 | Zip also contains `Makefile` and `bpe/`; folder paths are Makefile variables (`TEST_DIR`, `EXPECTED_DIR`, `BPE_DIR`) | The assignment's layout (`tests/` + `output/`) differs from the repo's; one Makefile serves both, so the grader can `make test` |
-| 2026-10-16 | BPE table adds a "lexemes only" column | Separates "BPE also counts comments/whitespace" from "BPE cuts differently" (1,681 vs 610 vs 459 tokens) |
-| 2026-10-15 | Working deadline Mon 2026-10-19 | The directive's "Monday, October 20" is self-contradictory (Oct 20 is a Tuesday, the class day). Aim for the earlier date until confirmed |
-| 2026-10-16 | Keep the student's `my_anka_code.anka` as test 8 (C34); report rewritten in simpler first-person language | The student's own program is a real extra test (nested `))`, no final newline). A report the student can explain live matters more than polished wording |
-| 2026-10-14 | Close every session with `/wrap-up` → student runs the git block → `/exit`; a `SessionStart` hook flags sessions that skipped it | A session ended with `/exit` and its log was lost. Hooks run shell commands, not the agent, so they can only *detect* a missed wrap-up, not write it |
+| 2026-10-14 | Path A: C + Flex (+ Bison) | Lectures and examples are Flex/Bison-first; C is a prerequisite |
+| 2026-10-14 | The repo is the agent memory (`PLAN.md`, `SESSION_LOG.md`, `AI_USAGE.md`); the agent never runs git write commands | Solo, multi-session work; the student keeps control of history |
+| 2026-10-14 | Close every session with `/wrap-up` → student runs the git block → `/exit`; a hook flags missed wrap-ups | A session log was lost once |
+| 2026-11-27 | **Evolve the existing repo, don't restart.** Anka keeps its name, but its grammar is redesigned as functional (v1.0) | The directive asks for one codebase; the lexer structure, Makefile, test method and docs workflow carry over. The P1 statement grammar (loops, mutation, floats, strings) is forbidden by the new rules |
+| 2026-11-27 | **C-style calls `f(x, y)`**, not ML-style `f x` | Familiar to humans and LLMs (Python/JS/Rust); avoids the `fact n - 1` = `(fact n) - 1` trap; reuses `(`, `)`, `,` from P1 |
+| 2026-11-27 | Top-level functions start with `fn`, local bindings are `let … in`; a program is `{ fn-def } expr` | The parser knows from the first token whether it sees a definition or the main expression |
+| 2026-11-27 | Source extension `.fpl`, binary `fplc` | Matches the professor's fixed CLI and test harness |
+| 2026-11-27 | P1 frozen as a buildable snapshot in `projects/project-1/code/`; the root `src/lexer.l` is the copy that evolves | P1 stays reproducible; `git diff` shows how the lexer changed for the final project |
+| 2026-11-27 | Verify IR with `opt -passes=verify -disable-output` | LLVM 23 rejects the directive's `opt -verify` (old pass-manager syntax). Same check, new spelling |

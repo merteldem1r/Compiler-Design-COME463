@@ -7,13 +7,13 @@ description: End-of-session handoff for this compiler course repo. Updates docs/
 
 Make sure the next session (local or cloud) can continue without this conversation.
 
-1. **Tests**: if a `Makefile` with a `test` target exists, run `make test` and note the result. Never record failing tests as passing.
+1. **Tests**: run `./run_tests.sh` if it exists (otherwise `make test` if that target exists) and note the result. Never record failing tests as passing.
 2. **`docs/PLAN.md`**: tick completed checklist items, add new tasks we discovered, and append any decision made this session to the decisions log (date, decision, why).
 3. **`docs/SESSION_LOG.md`**: add a new entry **at the top** with today's date and a short title:
    - **Done**: concrete outcomes (files, features, tests)
-   - **Bugs hit**: what failed, why, and the fix (the P1 report needs 3 of these, so don't skip this)
+   - **Bugs hit**: what failed, why, and the fix (the final REPORT needs 3 real bugs, so don't skip this)
    - **Next**: the 1–3 most important next actions, specific enough to start cold
 4. **`docs/AI_USAGE.md`**: add a row for this session. Copy 1–2 notable user prompts verbatim and record anything the AI got wrong and how it was fixed.
-5. **`docs/LANGUAGE.md`**: if token or grammar rules changed in code, make sure the spec matches.
+5. **`docs/LANGUAGE.md`** and **`SPEC.md`**: if token, grammar or type rules changed in code, make sure both match.
 6. **Git, shown and never run**: run `git status --short`, then print a ready-to-paste `git add <files>` + `git commit -m "..."` block summarizing the session, following `.claude/rules/workflow.md`. Never run git write commands yourself.
 7. Explain in 2–3 plain paragraphs what was saved and what's next (per `.claude/rules/workflow.md`).

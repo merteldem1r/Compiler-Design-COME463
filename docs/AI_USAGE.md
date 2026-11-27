@@ -15,6 +15,8 @@ Course policy: AI use must be acknowledged in every report, with **2–3 prompts
 | 2026-10-16 | P1 | BPE script + results; drafted SPEC, REPORT (incl. the 5 BPE answers) and the submission README from the project logs; built and dry-ran the zip | P-11, P-12 | (1) The BPE script first listed lexer errors after the tokens instead of in order; fixed before use. (2) SPEC design decision 1 first claimed munch "would fail on the second dot" (wrong: it would produce `FLOAT(0.)` + `.5`); reworded. (3) The report first numbered the bugs differently from the test-file headers; renumbered to match. Note: the lecture slide's `' 4','2'` split for `42` did not match any measured tokenizer; reported as measured |
 | 2026-10-16 | P1 | Rewrote REPORT.html in plainer first-person language; kept the student's own test file as C34 (header + expected output), regenerated BPE results, updated counts in README/PLAN/walkthrough | P-13 | (1) The first plain-language rewrite came out at 4 pages, over the 2-page limit; trimmed sentences until it fit 2 pages, checked by rendering the PDF. (2) Not an AI error but caught here: the student's commit `1fb7bd0` added a test without an expected output, so `make test` (and therefore `make package-p1`) failed 7/1 and the report's BPE numbers were stale |
 
+| 2026-11-27 | Final | Analyzed the final-project directive vs the repo (keep vs restart, gaps, risks, schedule); checked the new toolchain; reorganized the repo (P1 frozen, root = final project); rewrote PLAN/ROADMAP/CLAUDE.md/rules; rebuilt two missing session-log entries | P-14, P-15 | No wrong output caught so far. Note: the directive's `opt -verify` fails on LLVM 23; found by running it, not assumed. Uses `opt -passes=verify` |
+
 ## Prompts (verbatim)
 
 **P-1 (2026-10-14):**
@@ -55,3 +57,9 @@ Course policy: AI use must be acknowledged in every report, with **2–3 prompts
 
 **P-13 (2026-10-16):**
 > could you please, for project1, make the report look a bit more human-written, like it was written by a human, by the student? There are a lot of too-complex explanations, I guess. Make them a bit more understandable for me as well when I read and explain to the lecturer. Make it a little bit easier to explain and more human-written, please. For project1, analyze the current structure of the repository and make the changes, please.
+
+**P-14 (2026-11-27):**
+> analyze the current version of the project, our lectur advisor gave the last project which is the actual final project that we gonna present on the class, @projects/final-project/final_project.md you can check the .md file that he shared with us. Please analyze in detail what we should do, on which stage we are, what we gonna do next, are we on the stage wher we can continue to work on on the current stage of the project to finish the final project as well, or we should create somehting completely from scratch, analyze in detail ana explain me what we should do please
+
+**P-15 (2026-11-27):**
+> 1. yes the p1 one submitted and done 2. solo is confirmed, I'm gonna present the project at the 15 December, so we have a lot of time, 3. c-style calls is okay 4. your reccommendation, also I want to tell you that we can move the project 1 one the separate folder, I guess this is already done, so now we gonna treat that repo as the code for the final project, with complete simple compiler that works, so you can organize the repo if right now it's messy a bit

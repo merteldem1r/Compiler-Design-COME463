@@ -16,3 +16,6 @@ __pycache__/
 # local / OS
 .DS_Store
 .claude/settings.local.json
+
+# other
+.claude-logs
